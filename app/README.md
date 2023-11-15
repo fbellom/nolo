@@ -1,5 +1,9 @@
 # nolo
 
+Backend App to serve Data Information to Nolo Reader App.
+
+CCOM6035 Project 2023
+
 ## version: 1.0.0
 
 ## Curl Calls

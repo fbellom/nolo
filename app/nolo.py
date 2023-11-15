@@ -1,14 +1,18 @@
-from flask import Flask, request
+from flask import Flask, request, jsonify
+from s3_handler import AWSBucketAPI
 
 app = Flask(__name__)
 
 import dynamodb_handler as dynamodb
 
+bucket = AWSBucketAPI()
+userpath = "img/"
+
 
 @app.route("/")
 def root_route():
     dynamodb.CreateTable()
-    return 'Resource Created'
+    return "Resource Created"
 
 
 #  Add a book entry
@@ -99,6 +103,15 @@ def LikeBook(id):
         }
 
     return {"msg": "Some error occured", "response": response}
+
+
+
+# S3 Signed URL
+@app.route("/get-images")
+def get_images():
+    # !IMPORTANT! : User access must be checked before get operation!
+    # Users must only access their folders.
+    return jsonify(bucket.get_files(userpath))
 
 
 if __name__ == "__main__":
