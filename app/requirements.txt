@@ -21,9 +21,14 @@ mccabe==0.7.0
 mypy-extensions==1.0.0
 packaging==23.2
 pathspec==0.11.2
+pdf2image==1.16.3
+Pillow==10.1.0
 platformdirs==4.0.0
 pydotenv==0.0.7
 pylint==3.0.2
+PyMuPDF==1.23.6
+PyMuPDFb==1.23.6
+pytesseract==0.3.10
 python-dateutil==2.8.2
 python-dotenv==1.0.0
 pytz==2023.3.post1

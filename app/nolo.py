@@ -1,11 +1,11 @@
 from flask import Flask, request, jsonify
-from s3_handler import AWSBucketAPI
+from handlers.s3_handler import AWSBucketAPI
+import handlers.dynamodb_handler as dynamodb
+from handlers.pdf_handler import NoloPDFHandler
 
 app = Flask(__name__)
-
-import dynamodb_handler as dynamodb
-
 bucket = AWSBucketAPI()
+pdfhandler = NoloPDFHandler()
 userpath = "img/"
 
 
@@ -105,13 +105,37 @@ def LikeBook(id):
     return {"msg": "Some error occured", "response": response}
 
 
-
 # S3 Signed URL
 @app.route("/get-images")
 def get_images():
     # !IMPORTANT! : User access must be checked before get operation!
     # Users must only access their folders.
     return jsonify(bucket.get_files(userpath))
+
+
+# PDF ETL Management
+#  Convert PDF to Images
+#  Route: http://localhost:5000/etl/imgconv
+#  Method : GET
+@app.route("/etl/imgconv")
+def extract_images():
+    try:
+        response = pdfhandler.create_image_from_file()
+        return jsonify({"msg": "File Converted", "hash_name": response}), 201
+    except:
+        return jsonify(response), 400
+
+
+#  Convert Extract Text from PDF to Images
+#  Route: http://localhost:5000/etl/txtconv
+#  Method : GET
+@app.route("/etl/txtconv")
+def extract_text():
+    try:
+        response = pdfhandler.extract_text_from_file()
+        return jsonify({"msg": "File Converted", "hash_name": response}), 201
+    except:
+        return jsonify(response), 400
 
 
 if __name__ == "__main__":
