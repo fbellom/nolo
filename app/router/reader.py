@@ -1,6 +1,6 @@
 from fastapi import APIRouter,HTTPException, status, UploadFile, File
 from data.mockup import DUMMYData
-
+from pydantic import BaseModel
 
 
 
@@ -13,6 +13,13 @@ router = APIRouter(
 
 # Handlers
 dummy_data = DUMMYData()
+
+# Models
+class BookModel(BaseModel):
+    id: str
+    name: str
+    
+
 
 # Environment
 

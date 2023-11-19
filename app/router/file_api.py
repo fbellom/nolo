@@ -1,7 +1,7 @@
 from fastapi import APIRouter,HTTPException, status, UploadFile, File
 import os
 from handlers.pdf_handler import NoloPDFHandler
-
+from handlers.db_handler import NoloDBHandler
 
 
 router = APIRouter(
@@ -16,7 +16,7 @@ upload_path=os.getenv("UPLOAD_PATH")
 
 #Routes
 @router.get("/")
-def reader_index():
+def file_index():
     return {"mesagge":"Hello World", "module" : "file"}, status.HTTP_200_OK
 
 @router.get("/ping")
@@ -51,5 +51,8 @@ async def upload_file(file: UploadFile = File(...)):
     # TODO: Invoke S3 Handler to upload the img ad the txt files    
 
     # TODO: Send file_metadata to DynamoDB
+    db = NoloDBHandler()
+    table = db.get_table()
+    table.put_item(Item=file_metadata)
 
     return {"data": file_metadata}, status.HTTP_201_CREATED

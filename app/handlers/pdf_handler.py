@@ -16,7 +16,7 @@ class NoloPDFHandler:
     Class to Manage Files Conversion
     """
 
-    def __init__(self, file_name=None, path=None, out_path=None):
+    def __init__(self, file_name=None, path=None, out_path=None, img_dpi=72):
         self.fname = file_name or os.getenv("PDF_FILE")
         self.path = f"{path or os.getenv('PDF_PATH')}/{self.fname}"
         self.out_txt_path = f"{out_path or os.getenv('OUT_TXT_PATH')}"
@@ -25,6 +25,7 @@ class NoloPDFHandler:
         self.file_metadata["pages"] = []
         self.file_page = {}
         self.file_page["elements"] = {}
+        self.img_dpi = img_dpi
         self.page_index = []
         self.hashed_fname = self.create_fname_hash()
         self.ouput_exists = self.create_dir()
@@ -35,8 +36,8 @@ class NoloPDFHandler:
     def create_fname_hash(self):
         hashed_fname = hashlib.shake_128(self.fname.encode("utf-8")).hexdigest(4)
         # Create File Metadata Header
-        self.file_metadata["id"] = hashed_fname
-        self.file_metadata["name"] = self.fname
+        self.file_metadata["doc_id"] = hashed_fname
+        self.file_metadata["doc_name"] = self.fname
         self.file_metadata["modify_at"] = int(time.time())
         self.file_metadata["created_at"] = int(time.time())
         # hashed_fname = hashlib.shake_128(self.fname.encode("utf-8")).hexdigest(4)
@@ -89,9 +90,9 @@ class NoloPDFHandler:
             langs = detect_langs(text)
             for item in langs:
                 # The first one returned is usually the one that has the highest probability
-                return item.lang, item.prob
+                return item.lang, int(item.prob*100)
         except:
-            return "err", 0.0    
+            return "err", 0    
 
 
 # SYNCH Functions
@@ -111,7 +112,7 @@ class NoloPDFHandler:
     def create_image_from_file(self) -> bool:
         try:
             save_path = Path(f"./{self.out_img_path}/{self.hashed_fname}")
-            images = convert_from_path(self.path)
+            images = convert_from_path(self.path, dpi=self.img_dpi)
             for page_num, image in enumerate(images, start=1):
                 if page_num < 10:
                     page_num = f"0{page_num}"
@@ -201,7 +202,7 @@ class NoloPDFHandler:
 
     def _create_image_from_file_sync(self):
         save_path = Path(f"./{self.out_img_path}/{self.hashed_fname}")
-        images = convert_from_path(self.path)
+        images = convert_from_path(self.path, dpi=self.img_dpi)
         for page_num, image in enumerate(images, start=1):
             # Create a Unique pageID
             if page_num < 10:
@@ -220,18 +221,24 @@ class NoloPDFHandler:
                 New Page
                 """
                 file_page = {}
+                file_page["master_doc"] = self.hashed_fname
                 file_page["page_num"] = page_num
                 file_page["page_id"] = f"pg_{page_num}_{uuid4().hex}"
+                file_page["file_name"] = img_fname
                 self.create_page_index_list(page_num, self.file_page["page_id"])
-                file_page["full_image"] = f"data:image/jpeg;base64,{encoded_img}"
-                file_page["elements"] = {"image" : f"data:image/jpeg;base64,{encoded_img}"}
+                #file_page["full_image"] = f"data:image/jpeg;base64,{encoded_img}"
+                #file_page["elements"] = {"image" : f"data:image/jpeg;base64,{encoded_img}"}
+                file_page["elements"] = {"image" : img_fname}
                 self.file_metadata["pages"].append(file_page)
             else:
                 """
-                Add More MetaData to a Page
-                """    
-                page_data["full_image"] = f"data:image/jpeg;base64,{encoded_img}"
-                page_data["elements"]["image"] = f"data:image/jpeg;base64,{encoded_img}"
+                For Existing Pages, Add More MetaData to a Page
+                """
+                page_data["master_doc"] = self.hashed_fname
+                page_data["file_name"] = img_fname    
+                #page_data["full_image"] = f"data:image/jpeg;base64,{encoded_img}"
+                #page_data["elements"]["image"] = f"data:image/jpeg;base64,{encoded_img}"
+                page_data["elements"]["image"] = img_fname
 
 
             
@@ -265,8 +272,10 @@ class NoloPDFHandler:
                     For Any New Page Collect MetaData
                     """
                     file_page = {}
+                    file_page["master_doc"] = self.hashed_fname
                     file_page["page_num"] = page_num
                     file_page["page_id"] = f"pg_{page_num}_{uuid4().hex}"
+                    file_page["file_name"] = f"{self.hashed_fname}_page_{page_num}.txt"
                     self.create_page_index_list(page_num, file_page["page_id"])
                     file_page["elements"]= {"text": text, "lang" : lang, "lang_accuracy" : prob}
                     self.file_metadata["pages"].append(file_page)
@@ -275,6 +284,7 @@ class NoloPDFHandler:
                     """
                     For Existing Pages, just add the text element
                     """
+                    page_data["master_doc"] = self.hashed_fname
                     page_data["elements"]["text"] = text
             
         return self.hashed_fname
