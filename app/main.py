@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from settings.apiconfig import NOLOConfig
 from router import admin, reader
 import uvicorn
+from mangum import Mangum
 
 
 #Load Config
@@ -15,6 +16,9 @@ app =  FastAPI(
     description=api_config.description,
     root_path=api_config.root_path,
 )
+
+# For Serverles Lambda 
+handler = Mangum(app)
 
 # Router
 app.include_router(admin.router)
