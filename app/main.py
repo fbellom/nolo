@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from settings.apiconfig import NOLOConfig
-from router import admin, reader
+from router import admin, reader, file_api
 import uvicorn
 from mangum import Mangum
 
@@ -23,6 +23,7 @@ handler = Mangum(app)
 # Router
 app.include_router(admin.router)
 app.include_router(reader.router)
+app.include_router(file_api.router)
 
 # Run the API Server
 if __name__ == "__main__":

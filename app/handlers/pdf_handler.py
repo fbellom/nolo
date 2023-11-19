@@ -8,6 +8,7 @@ import asyncio
 from concurrent.futures import ThreadPoolExecutor
 import base64
 from uuid import uuid4
+from langdetect import detect_langs
 
 
 class NoloPDFHandler:
@@ -30,7 +31,7 @@ class NoloPDFHandler:
         
 
 
-# SYNCHRONOUS Functions
+# Utilities Functions
     def create_fname_hash(self):
         hashed_fname = hashlib.shake_128(self.fname.encode("utf-8")).hexdigest(4)
         # Create File Metadata Header
@@ -79,7 +80,21 @@ class NoloPDFHandler:
 
         return self.file_metadata
 
+    
+    def detect_text_language(self, text) -> tuple:
+        """
+        Detect Language in the extracted text
+        """
+        try:
+            langs = detect_langs(text)
+            for item in langs:
+                # The first one returned is usually the one that has the highest probability
+                return item.lang, item.prob
+        except:
+            return "err", 0.0    
 
+
+# SYNCH Functions
     def create_dir(self) -> bool:
         try:
             if not os.path.exists(f"./{self.out_txt_path}/{self.hashed_fname}"):
@@ -125,6 +140,10 @@ class NoloPDFHandler:
                     "a",
                 ) as txt:
                     txt.writelines(text)
+                    # Detect Language
+                    lang, prob = self.detect_text_language(text)
+                    self.file_metadata["lang"] = lang
+                    self.file_metadata["lang_prediction_accuracy"] = prob
             return self.hashed_fname
         except Exception as e:
             return False
@@ -234,6 +253,9 @@ class NoloPDFHandler:
                 "a",
             ) as txt:
                 txt.writelines(text)
+                lang, prob = self.detect_text_language(text)
+                # self.file_metadata["lang"] = lang
+                # self.file_metadata["lang_prediction_accuracy"] = prob
 
             # Assign Page Metadata    
             # Look for Existing the Page_ID in the Page Index, if not create one 
@@ -246,8 +268,9 @@ class NoloPDFHandler:
                     file_page["page_num"] = page_num
                     file_page["page_id"] = f"pg_{page_num}_{uuid4().hex}"
                     self.create_page_index_list(page_num, file_page["page_id"])
-                    file_page["elements"]= {"text": text}
+                    file_page["elements"]= {"text": text, "lang" : lang, "lang_accuracy" : prob}
                     self.file_metadata["pages"].append(file_page)
+
                 else:
                     """
                     For Existing Pages, just add the text element
