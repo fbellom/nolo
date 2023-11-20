@@ -1,6 +1,8 @@
 import boto3
+import logging
 import os
 from botocore.client import Config
+from botocore.exceptions import ClientError
 
 from dotenv import load_dotenv
 
@@ -13,13 +15,12 @@ AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
 REGION_NAME = os.getenv("REGION_NAME")
 
 
-client = boto3.client(
-    "s3",
-    aws_access_key_id=AWS_ACCESS_KEY_ID,
-    aws_secret_access_key=AWS_ACCESS_KEY_ID,
-    region_name=REGION_NAME,
-)
-
+# client = boto3.client(
+#     "s3",
+#     aws_access_key_id=AWS_ACCESS_KEY_ID,
+#     aws_secret_access_key=AWS_ACCESS_KEY_ID,
+#     region_name=REGION_NAME,
+# )
 
 class AWSBucketAPI:
     """
@@ -77,3 +78,12 @@ class AWSBucketAPI:
     def delete_file(self, filename):
         response = self.bucket.delete_object(Bucket=self.bucket_name, Key=filename)
         return response.get("DeleteMarker")
+
+    def upload_file(self,filename,file_path):
+        try:
+            self.bucket.upload_file(filename, self.bucket_name, file_path)
+            return True
+        except ClientError as e:
+            logging.error(e)
+            return False   
+    

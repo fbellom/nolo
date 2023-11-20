@@ -9,6 +9,7 @@ from concurrent.futures import ThreadPoolExecutor
 import base64
 from uuid import uuid4
 from langdetect import detect_langs
+from handlers.s3_handler import AWSBucketAPI
 
 
 class NoloPDFHandler:
@@ -16,8 +17,9 @@ class NoloPDFHandler:
     Class to Manage Files Conversion
     """
 
-    def __init__(self, file_name=None, path=None, out_path=None, img_dpi=72):
+    def __init__(self, file_name=None, path=None, out_path=None, img_dpi=72,description=None):
         self.fname = file_name or os.getenv("PDF_FILE")
+        self.description = description or ""
         self.path = f"{path or os.getenv('PDF_PATH')}/{self.fname}"
         self.out_txt_path = f"{out_path or os.getenv('OUT_TXT_PATH')}"
         self.out_img_path = f"{out_path or os.getenv('OUT_IMG_PATH')}"
@@ -29,6 +31,8 @@ class NoloPDFHandler:
         self.page_index = []
         self.hashed_fname = self.create_fname_hash()
         self.ouput_exists = self.create_dir()
+        self.s3_client = AWSBucketAPI()
+        
         
 
 
@@ -37,7 +41,8 @@ class NoloPDFHandler:
         hashed_fname = hashlib.shake_128(self.fname.encode("utf-8")).hexdigest(4)
         # Create File Metadata Header
         self.file_metadata["doc_id"] = hashed_fname
-        self.file_metadata["doc_name"] = self.fname
+        self.file_metadata["doc_name"] = self.fname[:-4].lower()
+        self.file_metadata["doc_description"] = self.description
         self.file_metadata["modify_at"] = int(time.time())
         self.file_metadata["created_at"] = int(time.time())
         # hashed_fname = hashlib.shake_128(self.fname.encode("utf-8")).hexdigest(4)
@@ -108,46 +113,6 @@ class NoloPDFHandler:
         except Exception as e:
             print(e)
             return False
-
-    def create_image_from_file(self) -> bool:
-        try:
-            save_path = Path(f"./{self.out_img_path}/{self.hashed_fname}")
-            images = convert_from_path(self.path, dpi=self.img_dpi)
-            for page_num, image in enumerate(images, start=1):
-                if page_num < 10:
-                    page_num = f"0{page_num}"
-
-                img_fname = f"{self.hashed_fname}_page_{page_num}.png"
-                image.save(save_path / img_fname, "PNG")
-
-            # TODO: Return File Path
-            
-            return self.hashed_fname
-        except Exception as e:
-            return False
-    
-    def extract_text_from_file(self) -> bool:
-        try:
-            pdf_file = fitz.open(self.path)
-
-            # Retrieve Text
-            for page_num, page in enumerate(pdf_file.pages(), start=1):
-                text = page.get_text()
-                if page_num < 10:
-                    page_num = f"0{page_num}"
-
-                with open(
-                    f"./{self.out_txt_path}/{self.hashed_fname}/{self.hashed_fname}_page_{page_num}.txt",
-                    "a",
-                ) as txt:
-                    txt.writelines(text)
-                    # Detect Language
-                    lang, prob = self.detect_text_language(text)
-                    self.file_metadata["lang"] = lang
-                    self.file_metadata["lang_prediction_accuracy"] = prob
-            return self.hashed_fname
-        except Exception as e:
-            return False
         
 # ASYNC Functions
     async def async_create_dir(self) -> bool:
@@ -212,7 +177,9 @@ class NoloPDFHandler:
             image.save(save_path / img_fname, "PNG")
 
             with open(f'./{self.out_img_path}/{self.hashed_fname}/{img_fname}', 'rb') as file_obj:
-                encoded_img = base64.b64encode(file_obj.read())
+                #encoded_img = base64.b64encode(file_obj.read())
+                # Upload to s3
+                self.s3_client.bucket.upload_fileobj(file_obj,self.s3_client.bucket_name,f"img/{self.hashed_fname}/{img_fname}")
 
             # Access Page MetaData
             page_data = self.get_page_data_dict(page_num)
@@ -226,8 +193,6 @@ class NoloPDFHandler:
                 file_page["page_id"] = f"pg_{page_num}_{uuid4().hex}"
                 file_page["file_name"] = img_fname
                 self.create_page_index_list(page_num, self.file_page["page_id"])
-                #file_page["full_image"] = f"data:image/jpeg;base64,{encoded_img}"
-                #file_page["elements"] = {"image" : f"data:image/jpeg;base64,{encoded_img}"}
                 file_page["elements"] = {"image" : img_fname}
                 self.file_metadata["pages"].append(file_page)
             else:
@@ -236,8 +201,6 @@ class NoloPDFHandler:
                 """
                 page_data["master_doc"] = self.hashed_fname
                 page_data["file_name"] = img_fname    
-                #page_data["full_image"] = f"data:image/jpeg;base64,{encoded_img}"
-                #page_data["elements"]["image"] = f"data:image/jpeg;base64,{encoded_img}"
                 page_data["elements"]["image"] = img_fname
 
 
@@ -258,11 +221,16 @@ class NoloPDFHandler:
             with open(
                 f"./{self.out_txt_path}/{self.hashed_fname}/{self.hashed_fname}_page_{page_num}.txt",
                 "a",
-            ) as txt:
-                txt.writelines(text)
+            ) as file_obj:
+                file_obj.writelines(text)
                 lang, prob = self.detect_text_language(text)
-                # self.file_metadata["lang"] = lang
-                # self.file_metadata["lang_prediction_accuracy"] = prob
+                # Upload to s3
+                self.s3_client.bucket.upload_file(
+                    f"./{self.out_txt_path}/{self.hashed_fname}/{self.hashed_fname}_page_{page_num}.txt",
+                    self.s3_client.bucket_name,
+                    f"txt/{self.hashed_fname}/{self.hashed_fname}_page_{page_num}.txt")
+
+
 
             # Assign Page Metadata    
             # Look for Existing the Page_ID in the Page Index, if not create one 

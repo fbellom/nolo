@@ -10,6 +10,7 @@ router = APIRouter(
 )
 
 # Handlers
+db = NoloDBHandler()
 
 # Environment
 upload_path=os.getenv("UPLOAD_PATH")
@@ -51,7 +52,6 @@ async def upload_file(file: UploadFile = File(...)):
     # TODO: Invoke S3 Handler to upload the img ad the txt files    
 
     # TODO: Send file_metadata to DynamoDB
-    db = NoloDBHandler()
     table = db.get_table()
     table.put_item(Item=file_metadata)
 
