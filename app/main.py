@@ -6,12 +6,12 @@ from mangum import Mangum
 from fastapi.middleware.cors import CORSMiddleware
 
 
-#Load Config
+# Load Config
 api_config = NOLOConfig()
 
 # Declare fastAPI
 
-app =  FastAPI(
+app = FastAPI(
     title=api_config.title,
     version=api_config.version,
     description=api_config.description,
@@ -25,10 +25,9 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-
 )
 
-# For Serverles Lambda 
+# For Serverles Lambda
 handler = Mangum(app)
 
 # Router

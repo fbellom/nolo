@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 
+
 # JWT AUthentication OAUTH Model
 class Token(BaseModel):
     access_token: str

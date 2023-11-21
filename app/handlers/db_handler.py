@@ -1,4 +1,3 @@
-
 import boto3
 import os
 from dotenv import load_dotenv
@@ -26,21 +25,17 @@ resource = boto3.resource(
     region_name=REGION_NAME,
 )
 
+
 class NoloDBHandler:
     """
     Dynamo DB Handler for Nolo Reader
     """
 
     def __init__(self, table_name=None):
-        self.table_name = table_name or os.getenv("API_DDB_TABLE_NAME") 
-
+        self.table_name = table_name or os.getenv("API_DDB_TABLE_NAME")
 
     def get_table(self):
         """
         Connect to DDB and get access to the table
         """
-        return resource.Table(self.table_name) 
-
-    
-
-
+        return resource.Table(self.table_name)

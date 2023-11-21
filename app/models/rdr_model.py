@@ -10,12 +10,14 @@ class PageElement(BaseModel):
     text: str | None = None
     txt_file_url: HttpUrl | None = None
 
+
 class Page(BaseModel):
     file_name: str | None = None
     page_id: str | None = None
     page_num: int | None = None
     master_doc: str | None = None
     elements: PageElement | None = None
+
 
 class Booklet(BaseModel):
     doc_id: str | None = None
@@ -28,13 +30,5 @@ class Booklet(BaseModel):
     pages: list[Page] | None = None
 
 
-
-
 class BookletList(RootModel[List[Booklet]]):
     root: List[Booklet]
-
-
-
-
-
-

@@ -19,13 +19,12 @@ client = boto3.client(
     region_name=REGION_NAME,
 )
 
-class NoloCloudTTS:
 
+class NoloCloudTTS:
     def __init__(self, audio_path=None, hashed_name=None, lang=None, prob=None):
         self.audio_path = f"{audio_path or os.getenv('OUT_AUDIO_PATH')}"
-        self.hashed_name= hashed_name
+        self.hashed_name = hashed_name
         self.ouput_exists = self.create_dir()
-    
 
     def create_dir(self) -> bool:
         try:

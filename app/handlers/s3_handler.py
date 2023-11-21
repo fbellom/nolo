@@ -22,6 +22,7 @@ REGION_NAME = os.getenv("REGION_NAME")
 #     region_name=REGION_NAME,
 # )
 
+
 class NoloBlobAPI:
     """
     S3 Objects Handler
@@ -78,31 +79,26 @@ class NoloBlobAPI:
     def delete_file(self, filename):
         response = self.bucket.delete_object(Bucket=self.bucket_name, Key=filename)
         return response.get("DeleteMarker")
-    
-        
-    def upload_file(self,filename,file_path):
+
+    def upload_file(self, filename, file_path):
         try:
             self.bucket.upload_file(filename, self.bucket_name, file_path)
             return True
         except ClientError as e:
             logging.error(e)
-            return False   
-        
+            return False
+
     def get_one_object(self, filename):
         try:
-            response = self.bucket.get_object(
-                Bucket=self.bucket_name,
-                Key=filename
-            )
+            response = self.bucket.get_object(Bucket=self.bucket_name, Key=filename)
 
             if response:
                 return True
         except ClientError as e:
             logging.error(e)
-            return False    
-        
+            return False
 
-    def delete_all_objects_from_s3_folder(self,prefix=None):
+    def delete_all_objects_from_s3_folder(self, prefix=None):
         """
         This function deletes all files in a folder from S3 bucket
         :return: True/False
@@ -110,7 +106,9 @@ class NoloBlobAPI:
 
         try:
             # First we list all files in folder
-            response = self.bucket.list_objects_v2(Bucket=self.bucket_name, Prefix=prefix)
+            response = self.bucket.list_objects_v2(
+                Bucket=self.bucket_name, Prefix=prefix
+            )
 
             files_in_folder = response["Contents"]
             files_to_delete = []
@@ -128,7 +126,3 @@ class NoloBlobAPI:
         except ClientError as e:
             logging.error(e)
             return False
-            
-       
-
-    
