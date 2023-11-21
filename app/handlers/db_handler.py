@@ -1,3 +1,4 @@
+
 import boto3
 import os
 from dotenv import load_dotenv
@@ -38,7 +39,8 @@ class NoloDBHandler:
         """
         Connect to DDB and get access to the table
         """
-        return resource.Table(self.table_name)   
+        return resource.Table(self.table_name) 
+
     
 
 

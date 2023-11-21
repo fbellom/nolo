@@ -9,8 +9,7 @@ from concurrent.futures import ThreadPoolExecutor
 import base64
 from uuid import uuid4
 from langdetect import detect_langs
-from handlers.s3_handler import AWSBucketAPI
-
+from handlers.s3_handler import NoloBlobAPI
 
 class NoloPDFHandler:
     """
@@ -31,7 +30,7 @@ class NoloPDFHandler:
         self.page_index = []
         self.hashed_fname = self.create_fname_hash()
         self.ouput_exists = self.create_dir()
-        self.s3_client = AWSBucketAPI()
+        self.s3_client = NoloBlobAPI()
         
         
 
@@ -171,15 +170,26 @@ class NoloPDFHandler:
         for page_num, image in enumerate(images, start=1):
             # Create a Unique pageID
             if page_num < 10:
-                page_num = f"0{page_num}"
+                # page_num = f"0{page_num}"
+                label_num = f"0{page_num}"
+            else:
+                label_num = f"{page_num}"      
             
-            img_fname = f"{self.hashed_fname}_page_{page_num}.png"
+            img_fname = f"{self.hashed_fname}_page_{label_num}.png"
             image.save(save_path / img_fname, "PNG")
 
             with open(f'./{self.out_img_path}/{self.hashed_fname}/{img_fname}', 'rb') as file_obj:
                 #encoded_img = base64.b64encode(file_obj.read())
                 # Upload to s3
                 self.s3_client.bucket.upload_fileobj(file_obj,self.s3_client.bucket_name,f"img/{self.hashed_fname}/{img_fname}")
+
+                s3_img_file_name = f"img/{self.hashed_fname}/{img_fname}"
+                
+                presigned_url = self.s3_client.generate_presigned_url(s3_img_file_name, expires=os.getenv("URL_EXPIRATION_IN_SECS"))
+            # cover page
+            if page_num == 1:
+                self.file_metadata["cover_img"] = presigned_url 
+
 
             # Access Page MetaData
             page_data = self.get_page_data_dict(page_num)
@@ -192,8 +202,9 @@ class NoloPDFHandler:
                 file_page["page_num"] = page_num
                 file_page["page_id"] = f"pg_{page_num}_{uuid4().hex}"
                 file_page["file_name"] = img_fname
+                file_page["img_url"] = presigned_url
                 self.create_page_index_list(page_num, self.file_page["page_id"])
-                file_page["elements"] = {"image" : img_fname}
+                file_page["elements"] = {"image" : img_fname, "img_url" : presigned_url}
                 self.file_metadata["pages"].append(file_page)
             else:
                 """
@@ -202,6 +213,7 @@ class NoloPDFHandler:
                 page_data["master_doc"] = self.hashed_fname
                 page_data["file_name"] = img_fname    
                 page_data["elements"]["image"] = img_fname
+                page_data["elements"]["img_url"] = presigned_url
 
 
             
@@ -217,18 +229,24 @@ class NoloPDFHandler:
 
             # Create TEXT Files from Content
             if page_num < 10:
-                page_num = f"0{page_num}"
+                #page_num = f"0{page_num}"
+                label_num = f"0{page_num}"
+            else:
+                label_num = f"{page_num}"    
             with open(
-                f"./{self.out_txt_path}/{self.hashed_fname}/{self.hashed_fname}_page_{page_num}.txt",
+                f"./{self.out_txt_path}/{self.hashed_fname}/{self.hashed_fname}_page_{label_num}.txt",
                 "a",
             ) as file_obj:
                 file_obj.writelines(text)
                 lang, prob = self.detect_text_language(text)
                 # Upload to s3
                 self.s3_client.bucket.upload_file(
-                    f"./{self.out_txt_path}/{self.hashed_fname}/{self.hashed_fname}_page_{page_num}.txt",
+                    f"./{self.out_txt_path}/{self.hashed_fname}/{self.hashed_fname}_page_{label_num}.txt",
                     self.s3_client.bucket_name,
-                    f"txt/{self.hashed_fname}/{self.hashed_fname}_page_{page_num}.txt")
+                    f"txt/{self.hashed_fname}/{self.hashed_fname}_page_{label_num}.txt")
+
+                s3_txt_file_name =  f"txt/{self.hashed_fname}/{self.hashed_fname}_page_{label_num}.txt" 
+                presigned_url = self.s3_client.generate_presigned_url(s3_txt_file_name, expires=os.getenv("URL_EXPIRATION_IN_SECS"))
 
 
 
@@ -242,10 +260,13 @@ class NoloPDFHandler:
                     file_page = {}
                     file_page["master_doc"] = self.hashed_fname
                     file_page["page_num"] = page_num
-                    file_page["page_id"] = f"pg_{page_num}_{uuid4().hex}"
-                    file_page["file_name"] = f"{self.hashed_fname}_page_{page_num}.txt"
+                    file_page["page_id"] = f"pg_{label_num}_{uuid4().hex}"
+                    file_page["file_name"] = f"{self.hashed_fname}_page_{label_num}.txt"
                     self.create_page_index_list(page_num, file_page["page_id"])
-                    file_page["elements"]= {"text": text, "lang" : lang, "lang_accuracy" : prob}
+                    file_page["elements"]= {"text": text, 
+                                            "lang" : lang, 
+                                            "lang_accuracy" : prob,
+                                            "txt_file_url" : presigned_url }
                     self.file_metadata["pages"].append(file_page)
 
                 else:
@@ -254,6 +275,9 @@ class NoloPDFHandler:
                     """
                     page_data["master_doc"] = self.hashed_fname
                     page_data["elements"]["text"] = text
+                    page_data["elements"]["lang"] = lang
+                    page_data["elements"]["lang_accuracy"] = prob 
+                    page_data["elements"]["txt_file_url"] = presigned_url
             
         return self.hashed_fname
     

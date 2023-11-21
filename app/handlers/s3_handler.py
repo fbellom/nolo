@@ -22,7 +22,7 @@ REGION_NAME = os.getenv("REGION_NAME")
 #     region_name=REGION_NAME,
 # )
 
-class AWSBucketAPI:
+class NoloBlobAPI:
     """
     S3 Objects Handler
     """
@@ -78,7 +78,8 @@ class AWSBucketAPI:
     def delete_file(self, filename):
         response = self.bucket.delete_object(Bucket=self.bucket_name, Key=filename)
         return response.get("DeleteMarker")
-
+    
+        
     def upload_file(self,filename,file_path):
         try:
             self.bucket.upload_file(filename, self.bucket_name, file_path)
@@ -86,4 +87,48 @@ class AWSBucketAPI:
         except ClientError as e:
             logging.error(e)
             return False   
+        
+    def get_one_object(self, filename):
+        try:
+            response = self.bucket.get_object(
+                Bucket=self.bucket_name,
+                Key=filename
+            )
+
+            if response:
+                return True
+        except ClientError as e:
+            logging.error(e)
+            return False    
+        
+
+    def delete_all_objects_from_s3_folder(self,prefix=None):
+        """
+        This function deletes all files in a folder from S3 bucket
+        :return: True/False
+        """
+
+        try:
+            # First we list all files in folder
+            response = self.bucket.list_objects_v2(Bucket=self.bucket_name, Prefix=prefix)
+
+            files_in_folder = response["Contents"]
+            files_to_delete = []
+            # We will create Key array to pass to delete_objects function
+            for f in files_in_folder:
+                files_to_delete.append({"Key": f["Key"]})
+
+            # This will delete all files in a folder
+            response = self.bucket.delete_objects(
+                Bucket=self.bucket_name, Delete={"Objects": files_to_delete}
+            )
+
+            return True
+
+        except ClientError as e:
+            logging.error(e)
+            return False
+            
+       
+
     
