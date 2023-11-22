@@ -4,7 +4,7 @@ router = APIRouter(prefix="/admin", tags=["admin"])
 
 
 # Routes
-@router.get("/")
+@router.get("")
 def admin_index():
     return {"mesagge": "Hello World"}, status.HTTP_200_OK
 

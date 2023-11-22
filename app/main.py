@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from settings.apiconfig import NOLOConfig
-from router import admin, reader, file_api, token
+from router import admin, reader, file_api, token, sign
 import uvicorn
 from mangum import Mangum
 from fastapi.middleware.cors import CORSMiddleware
@@ -32,6 +32,7 @@ handler = Mangum(app)
 
 # Router
 app.include_router(token.router)
+app.include_router(sign.router)
 app.include_router(admin.router)
 app.include_router(reader.router)
 app.include_router(file_api.router)

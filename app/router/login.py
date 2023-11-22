@@ -2,12 +2,13 @@ from fastapi import APIRouter, HTTPException, status, Body
 
 
 # Module specific Libraries
-from models.iam_model import UserLoginSchema, UserSchema
+
 
 # Global Vars
 MODULE_NAME = "login"
 MODULE_PREFIX = "/login"
 MODULE_TAGS = [MODULE_NAME]
+MODULE_DESCRIPTION = ""
 
 # FastAPI Instance
 router = APIRouter(prefix=MODULE_PREFIX, tags=MODULE_TAGS)

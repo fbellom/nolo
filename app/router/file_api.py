@@ -1,9 +1,13 @@
-from fastapi import APIRouter, HTTPException, status, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 import os
 from handlers.pdf_handler import NoloPDFHandler
 from handlers.db_handler import NoloDBHandler
 from handlers.s3_handler import NoloBlobAPI
+from handlers.dep_handler import get_current_active_user
+from models.iam_model import User
 from models.rdr_model import Booklet
+from typing import Annotated
+
 
 
 router = APIRouter(prefix="/file", tags=["file"])
@@ -15,6 +19,8 @@ blob = NoloBlobAPI()
 # Environment
 upload_path = os.getenv("UPLOAD_PATH")
 
+#Depends
+PROTECTED=Depends(get_current_active_user)
 
 # Routes
 @router.get("")
@@ -27,8 +33,8 @@ def ping():
     return {"message": "pong", "module": "file"}, status.HTTP_200_OK
 
 
-@router.post("/upload", response_model=Booklet)
-async def upload_file(file: UploadFile = File(...)):
+@router.post("/upload", summary="Upload Booklet to be processed",response_model=Booklet, dependencies=[PROTECTED])
+async def upload_file(file: UploadFile = File(...), user: User = Depends(get_current_active_user)):
     # Validate PDF File
     if file.content_type != "application/pdf":
         raise HTTPException(
@@ -51,6 +57,7 @@ async def upload_file(file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail="Failed to extract Images from PDF")
 
     file_metadata = pdf_handler.get_file_metadata()
+    file_metadata.update({"owner_id" : user.username})
     #
     # TODO: Invoke S3 Handler to upload the img ad the txt files
 
@@ -61,8 +68,8 @@ async def upload_file(file: UploadFile = File(...)):
     return file_metadata
 
 
-@router.delete("/{doc_id}")
-async def delete_one_booklet(doc_id: str):
+@router.delete("/{doc_id}", summary="Delete a Booklet", dependencies=[PROTECTED])
+async def delete_one_booklet(doc_id: str, user: User = Depends(get_current_active_user)):
     delete_doc_exception = HTTPException(
         status_code=status.HTTP_400_BAD_REQUEST,
         detail="The Booklet can not be deleted",
@@ -94,4 +101,4 @@ async def delete_one_booklet(doc_id: str):
 
     except:
         raise delete_doc_exception
-    return {"deleted_booklet_id": doc_id}
+    return {"deleted_booklet_id": doc_id, "username" : user.username}

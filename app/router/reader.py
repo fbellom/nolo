@@ -1,14 +1,12 @@
 from fastapi import APIRouter, HTTPException, status, UploadFile, File
-from data.mockup import DUMMYData
 from handlers.db_handler import NoloDBHandler
-from models.rdr_model import Booklet, Page, PageElement, BookletList
-import simplejson as json
+from models.rdr_model import Booklet, BookletList
 
 
+# fastAPI
 router = APIRouter(prefix="/reader", tags=["reader"])
 
 # Handlers
-dummy_data = DUMMYData()
 db = NoloDBHandler()
 
 # Models
@@ -18,14 +16,14 @@ db = NoloDBHandler()
 
 
 # Routes
-@router.get("/")
+@router.get("")
 def reader_index():
-    return {"mesagge": "Hello World", "module": "reader"}, status.HTTP_200_OK
+    return {"mesagge": "Hello World", "module": "reader"}
 
 
 @router.get("/ping")
 def ping():
-    return {"message": "pong", "module": "reader"}, status.HTTP_200_OK
+    return {"message": "pong", "module": "reader"}
 
 
 # TODO: Add URI for Return all the Documents id, Name, Cover Page Thumbnail

@@ -26,6 +26,7 @@ class Booklet(BaseModel):
     number_of_pages: int | None = None
     created_at: int | None = None
     modify_at: int | None = None
+    owner_id: str | None = None
     cover_img: HttpUrl | None = None
     pages: list[Page] | None = None
 
