@@ -11,9 +11,12 @@ CRUD DOcuments for Reader
 ## ETL
 Handle the Adquisitions of new documents
 """
+AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
+AWS_DEFAULT_REGION = os.getenv("AWS_DEFAULT_REGION")
 
 
-class NOLOConfig:
+class NoloCFG:
     """
     NOLO Initials Parameters
     """
@@ -25,3 +28,6 @@ class NOLOConfig:
         self.secret_key = "" or os.getenv("SECRET_KEY")
         self.root_path = "" or os.getenv("API_ROOT_URI")
         self.run_mode = "" or os.getenv("API_RUN_MODE")
+        self.aws_access_key_id = AWS_ACCESS_KEY_ID
+        self.aws_secret_access_key_id = AWS_SECRET_ACCESS_KEY
+        self.aws_default_region = AWS_DEFAULT_REGION

@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from settings.apiconfig import NOLOConfig
+from settings.apiconfig import NoloCFG
 from router import booklet, reader, token, sign, tts
 import uvicorn
 from mangum import Mangum
@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 
 # Load Config
-api_config = NOLOConfig()
+api_config = NoloCFG()
 
 # Declare fastAPI
 
@@ -21,7 +21,7 @@ app = FastAPI(
 # Midelleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:8000", "*"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -3,16 +3,22 @@ import logging
 import os
 from botocore.client import Config
 from botocore.exceptions import ClientError
+from settings.apiconfig import NoloCFG
 
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
 
 # Load ENV data
-load_dotenv()
+# load_dotenv()
+cfg = NoloCFG()
 
 # Load AWS Data
-AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
-AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
-REGION_NAME = os.getenv("AWS_DEFAULT_REGION")
+# AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
+# AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
+# REGION_NAME = os.getenv("AWS_DEFAULT_REGION")
+
+AWS_ACCESS_KEY_ID = cfg.aws_access_key_id
+AWS_SECRET_ACCESS_KEY = cfg.aws_secret_access_key_id
+REGION_NAME = cfg.aws_default_region
 
 
 # client = boto3.client(
@@ -37,6 +43,7 @@ class NoloBlobAPI:
             region_name=REGION_NAME,
             config=Config(signature_version="s3v4", s3={"addressing_style": "path"}),
         )
+        logging.info(f"NoloBlob Object Created")
 
     def generate_presigned_url(self, filename, expires=3600):
         return self.bucket.generate_presigned_url(

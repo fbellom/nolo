@@ -2,15 +2,22 @@ import boto3
 import os
 from botocore.client import Config
 
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
+
+from settings.apiconfig import NoloCFG
 
 # Load ENV data
-load_dotenv()
+# load_dotenv()
+cfg = NoloCFG()
 
 # Load AWS Data
-AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
-AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
-REGION_NAME = os.getenv("AWS_DEFAULT_REGION")
+# AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
+# AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
+# REGION_NAME = os.getenv("AWS_DEFAULT_REGION")
+
+AWS_ACCESS_KEY_ID = cfg.aws_access_key_id
+AWS_SECRET_ACCESS_KEY = cfg.aws_secret_access_key_id
+REGION_NAME = cfg.aws_default_region
 
 client = boto3.client(
     "polly",
