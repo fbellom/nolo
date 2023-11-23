@@ -72,7 +72,7 @@ async def sign_up(
 
     status = user_db.insert_user(new_user)
 
-    if status is not 200:
+    if status != 200:
         raise
 
     return new_user
