@@ -14,7 +14,7 @@ from handlers.dep_handler import get_current_active_user
 MODULE_NAME = "token"
 MODULE_PREFIX = "/token"
 MODULE_TAGS = [MODULE_NAME]
-MODULE_SUMMARY="Create access and refresh tokens for users"
+MODULE_SUMMARY = "Create access and refresh tokens for users"
 
 # FastAPI Instance
 router = APIRouter(prefix=MODULE_PREFIX, tags=MODULE_TAGS)
@@ -25,25 +25,11 @@ router = APIRouter(prefix=MODULE_PREFIX, tags=MODULE_TAGS)
 # Handlers
 iam = NoloToken()
 user_db = NoloUserDB()
+
 # Environment
 
 
-# Utility Functions
-# def get_user(username:str)->dict:
-#     table = db.get_table()
-#     response = table.get_item(Key={"username": username})
-#     user = response.get("Item")
-
-#     if not user:
-#         return None
-    
-#     return UserInDB(**user)
-    
-    # def get_user(self, username: str):
-    #     if username in self.user_db:
-    #         user_dict = self.user_db[username]
-    #         return UserInDB(**user_dict)
-
+# Utilities Function
 def authenticate_user(username: str, password: str):
     user = user_db.get_one_user(username)
     if not user:
@@ -52,8 +38,9 @@ def authenticate_user(username: str, password: str):
         return False
     return user
 
+
 # Routes
-@router.post("", summary=MODULE_SUMMARY,response_model=Token)
+@router.post("", summary=MODULE_SUMMARY, response_model=Token)
 async def login_for_access_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
 ):
@@ -68,10 +55,10 @@ async def login_for_access_token(
     refresh_token = iam.create_refresh_token(data={"sub": user.username})
 
     return {
-        "access_token": access_token, 
-        "token_type": "bearer", 
-        "refresh_token" : refresh_token
-        }
+        "access_token": access_token,
+        "token_type": "bearer",
+        "refresh_token": refresh_token,
+    }
 
 
 @router.get("/me", summary="Get details of current logged in user", response_model=User)

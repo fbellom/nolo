@@ -41,39 +41,38 @@ def ping():
     return {"message": "pong", "module": MODULE_NAME}, status.HTTP_200_OK
 
 
-@router.post("", summary="Registering new users", status_code=status.HTTP_201_CREATED, response_model=User)
+@router.post(
+    "",
+    summary="Registering new users",
+    status_code=status.HTTP_201_CREATED,
+    response_model=User,
+)
 async def sign_up(
-    username: str = Body(...), 
+    username: str = Body(...),
     password: str = Body(...),
     full_name: str = Body(...),
-    email: str = Body(...)):
-
+    email: str = Body(...),
+):
     # Exceptions
 
-
- 
-
-   
-
-   # Get One User
+    # Get One User
     user = user_db.get_one_user(username=username)
 
     if user:
         return None
 
-
     new_user = {
-        "username" : username,
-        "email" : email,
-        "full_name" : full_name,
-        "hashed_password" : tkn.get_password_hash(password),
-        "disabled" : False,
-        "user_id" : f"{uuid.uuid4().hex}",
+        "username": username,
+        "email": email,
+        "full_name": full_name,
+        "hashed_password": tkn.get_password_hash(password),
+        "disabled": False,
+        "user_id": f"{uuid.uuid4().hex}",
     }
 
     status = user_db.insert_user(new_user)
 
     if status is not 200:
-        raise 
+        raise
 
     return new_user

@@ -3,8 +3,14 @@ from handlers.db_handler import NoloDBHandler
 from models.rdr_model import Booklet, BookletList
 
 
-# fastAPI
-router = APIRouter(prefix="/reader", tags=["reader"])
+# Global Vars
+MODULE_NAME = "reader"
+MODULE_PREFIX = "/reader"
+MODULE_TAGS = [MODULE_NAME]
+MODULE_DESCRIPTION = ""
+
+# FastAPI Instance
+router = APIRouter(prefix=MODULE_PREFIX, tags=MODULE_TAGS)
 
 # Handlers
 db = NoloDBHandler()
@@ -16,14 +22,17 @@ db = NoloDBHandler()
 
 
 # Routes
-@router.get("")
-def reader_index():
-    return {"mesagge": "Hello World", "module": "reader"}
+@router.get("/")
+def index():
+    return {
+        "mesagge": f"Hello to module: {MODULE_NAME}",
+        "module": MODULE_NAME,
+    }
 
 
 @router.get("/ping")
 def ping():
-    return {"message": "pong", "module": "reader"}
+    return {"message": "pong", "module": MODULE_NAME}
 
 
 # TODO: Add URI for Return all the Documents id, Name, Cover Page Thumbnail

@@ -1,5 +1,3 @@
-
-
 import os
 from typing import Annotated
 from fastapi import Depends, HTTPException, status
@@ -10,9 +8,9 @@ from models.iam_model import User, UserInDB
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
 
-SECRET_KEY=os.getenv("JWT_SECRET_KEY")
-REFRESH_KEY=os.getenv("JWT_REFRESH_SECRET_KEY")
-ALGORITHM=os.getenv("JWT_ALGORITHM")
+SECRET_KEY = os.getenv("JWT_SECRET_KEY")
+REFRESH_KEY = os.getenv("JWT_REFRESH_SECRET_KEY")
+ALGORITHM = os.getenv("JWT_ALGORITHM")
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
@@ -20,7 +18,6 @@ user_ddb = os.getenv("USER_DDB_TABLE_NAME")
 
 # Handlers
 user_db = NoloUserDB()
-
 
 
 async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):

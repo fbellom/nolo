@@ -9,8 +9,13 @@ from models.rdr_model import Booklet
 from typing import Annotated
 
 
+# Global Vars
+MODULE_NAME = "booklet"
+MODULE_PREFIX = "/booklet"
+MODULE_TAGS = [MODULE_NAME]
+MODULE_DESCRIPTION = ""
 
-router = APIRouter(prefix="/file", tags=["file"])
+router = APIRouter(prefix=MODULE_PREFIX, tags=MODULE_TAGS)
 
 # Handlers
 db = NoloDBHandler()
@@ -19,22 +24,30 @@ blob = NoloBlobAPI()
 # Environment
 upload_path = os.getenv("UPLOAD_PATH")
 
-#Depends
-PROTECTED=Depends(get_current_active_user)
+# Depends
+PROTECTED = Depends(get_current_active_user)
+
 
 # Routes
 @router.get("")
 def index():
-    return {"mesagge": "Hello World", "module": "file"}, status.HTTP_200_OK
+    return {"mesagge": "Hello World", "module": MODULE_NAME}
 
 
 @router.get("/ping")
 def ping():
-    return {"message": "pong", "module": "file"}, status.HTTP_200_OK
+    return {"message": "pong", "module": MODULE_NAME}
 
 
-@router.post("/upload", summary="Upload Booklet to be processed",response_model=Booklet, dependencies=[PROTECTED])
-async def upload_file(file: UploadFile = File(...), user: User = Depends(get_current_active_user)):
+@router.post(
+    "/upload",
+    summary="Upload Booklet to be processed",
+    response_model=Booklet,
+    dependencies=[PROTECTED],
+)
+async def upload_file(
+    file: UploadFile = File(...), user: User = Depends(get_current_active_user)
+):
     # Validate PDF File
     if file.content_type != "application/pdf":
         raise HTTPException(
@@ -57,7 +70,7 @@ async def upload_file(file: UploadFile = File(...), user: User = Depends(get_cur
         raise HTTPException(status_code=400, detail="Failed to extract Images from PDF")
 
     file_metadata = pdf_handler.get_file_metadata()
-    file_metadata.update({"owner_id" : user.username})
+    file_metadata.update({"owner_id": user.username})
     #
     # TODO: Invoke S3 Handler to upload the img ad the txt files
 
@@ -69,7 +82,9 @@ async def upload_file(file: UploadFile = File(...), user: User = Depends(get_cur
 
 
 @router.delete("/{doc_id}", summary="Delete a Booklet", dependencies=[PROTECTED])
-async def delete_one_booklet(doc_id: str, user: User = Depends(get_current_active_user)):
+async def delete_one_booklet(
+    doc_id: str, user: User = Depends(get_current_active_user)
+):
     delete_doc_exception = HTTPException(
         status_code=status.HTTP_400_BAD_REQUEST,
         detail="The Booklet can not be deleted",
@@ -101,4 +116,4 @@ async def delete_one_booklet(doc_id: str, user: User = Depends(get_current_activ
 
     except:
         raise delete_doc_exception
-    return {"deleted_booklet_id": doc_id, "username" : user.username}
+    return {"deleted_booklet_id": doc_id, "username": user.username}

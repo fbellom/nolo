@@ -28,9 +28,9 @@ def index():
     return {
         "mesagge": f"Hello to module: {MODULE_NAME}",
         "module": MODULE_NAME,
-    }, status.HTTP_200_OK
+    }
 
 
 @router.get("/ping")
 def ping():
-    return {"message": "pong", "module": MODULE_NAME}, status.HTTP_200_OK
+    return {"message": "pong", "module": MODULE_NAME}
