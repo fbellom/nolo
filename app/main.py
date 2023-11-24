@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from settings.apiconfig import NoloCFG
-from router import booklet, reader, token, sign, tts, cloudmanager
+from router import booklet, reader, token, sign, tts
 import uvicorn
 from mangum import Mangum
 from fastapi.middleware.cors import CORSMiddleware
