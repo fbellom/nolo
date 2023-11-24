@@ -66,7 +66,7 @@ async def sign_up(
         "email": email,
         "full_name": full_name,
         "hashed_password": tkn.get_password_hash(password),
-        "disabled": False,
+        "disabled": True,
         "user_id": f"{uuid.uuid4().hex}",
     }
 

@@ -22,7 +22,7 @@ db = NoloDBHandler()
 
 
 # Routes
-@router.get("/")
+@router.get("")
 def index():
     return {
         "mesagge": f"Hello to module: {MODULE_NAME}",
