@@ -10,7 +10,10 @@ import base64
 from uuid import uuid4
 from langdetect import detect_langs
 from handlers.s3_handler import NoloBlobAPI
+import logging
 
+# Create Logger
+logger = logging.getLogger(__name__)
 
 class NoloPDFHandler:
     """
@@ -34,6 +37,8 @@ class NoloPDFHandler:
         self.hashed_fname = self.create_fname_hash()
         self.ouput_exists = self.create_dir()
         self.s3_client = NoloBlobAPI()
+
+        logger.info("PDF Handler Created")
 
     # Utilities Functions
     def create_fname_hash(self):
@@ -65,7 +70,7 @@ class NoloPDFHandler:
             page_id = [item[1] for item in self.page_index if item[0] == page_num]
             return page_id[0]
         except Exception as e:
-            print(e)
+            logger.error(e)
             return None
 
     def get_page_data_dict(self, page_num) -> dict:
@@ -75,7 +80,8 @@ class NoloPDFHandler:
         try:
             page_data_dict = self.file_metadata["pages"][int(page_num) - 1]
             return page_data_dict
-        except IndexError:
+        except IndexError as e:
+            logger.error(e)
             return None
 
     def get_file_metadata(self) -> dict:
@@ -94,7 +100,8 @@ class NoloPDFHandler:
             for item in langs:
                 # The first one returned is usually the one that has the highest probability
                 return item.lang, int(item.prob * 100)
-        except:
+        except Exception as e:
+            logger.error(e)
             return "err", 0
 
     # SYNCH Functions
@@ -102,13 +109,16 @@ class NoloPDFHandler:
         try:
             if not os.path.exists(f"./{self.out_txt_path}/{self.hashed_fname}"):
                 os.makedirs(f"./{self.out_txt_path}/{self.hashed_fname}")
+                logger.info(f"PDF Text path for booklet {self.hashed_fname} created sucessfuly!")
+
 
             if not os.path.exists(f"./{self.out_img_path}/{self.hashed_fname}"):
                 os.makedirs(f"./{self.out_img_path}/{self.hashed_fname}")
+                logger.info(f"PDF Image path for booklet {self.hashed_fname} created sucessfuly!")
 
             return True
         except Exception as e:
-            print(e)
+            logger.error(e)
             return False
 
     # ASYNC Functions
@@ -129,9 +139,10 @@ class NoloPDFHandler:
                 result = await loop.run_in_executor(
                     pool, self._create_image_from_file_sync
                 )
+            logger.info("PDF Images extracted sucessfuly!")      
             return result
         except Exception as e:
-            print(e)
+            logger.error(f"Image extraction failed", extra={"error" : e})
             return False
 
     async def async_extract_text_from_file(self) -> bool:
@@ -141,22 +152,25 @@ class NoloPDFHandler:
                 result = await loop.run_in_executor(
                     pool, self._extract_text_from_file_sync
                 )
+            logger.info("PDF Text extracted sucessfuly!")    
             return result
         except Exception as e:
-            print(e)
+            logger.error(f"Text extraction failed", extra={"error" : e})
             return False
 
     def _create_dir_sync(self) -> bool:
         try:
             if not os.path.exists(f"./{self.out_txt_path}/{self.hashed_fname}"):
                 os.makedirs(f"./{self.out_txt_path}/{self.hashed_fname}")
+                logger.info(f"PDF Text path for booklet {self.hashed_fname} created sucessfuly!")
 
             if not os.path.exists(f"./{self.out_img_path}/{self.hashed_fname}"):
                 os.makedirs(f"./{self.out_img_path}/{self.hashed_fname}")
+                logger.info(f"PDF Image path for booklet {self.hashed_fname} created sucessfuly!")
 
             return True
         except Exception as e:
-            print(e)
+            logger.error(f"Path creation failed", extra={"error" : e})
             return False
 
     def _create_image_from_file_sync(self):

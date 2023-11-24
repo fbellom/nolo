@@ -7,6 +7,10 @@ from handlers.dep_handler import get_current_active_user
 from models.iam_model import User
 from models.rdr_model import Booklet
 from typing import Annotated
+import logging
+
+# Create Logger
+logger = logging.getLogger(__name__)
 
 
 # Global Vars
@@ -48,11 +52,23 @@ def ping():
 async def upload_file(
     file: UploadFile = File(...), user: User = Depends(get_current_active_user)
 ):
+    # Exception
+    file_type_exception = HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail="User is inactive",
+    )
+    user_inactive_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="User is inactive",
+    )
+    
     # Validate PDF File
     if file.content_type != "application/pdf":
-        raise HTTPException(
-            status_code=400, detail="Invalid file type. Only PDF files are allowed."
-        )
+        raise file_type_exception
+    
+    if user.disabled:
+        raise user_inactive_exception
+    
     # Save File Locally
     file_location = f"{upload_path}/{file.filename}"
     with open(file_location, "wb") as file_object:
@@ -95,6 +111,14 @@ async def delete_one_booklet(
         detail="The Booklet Images and text can not be deleted",
     )
 
+    user_inactive_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="User is inactive",
+    )
+
+    if user.disabled:
+        raise user_inactive_exception
+
     try:
         # Delete DynamoDB Info
         table = db.get_table()
@@ -113,7 +137,9 @@ async def delete_one_booklet(
             response = blob.delete_all_objects_from_s3_folder(filename)
             if not response:
                 raise delete_blob_exception
-
-    except:
+            
+        logger.info(f"Booklet {doc_id} and its all related files deleted!")    
+    except Exception as e:
+        logger.error(f"Booklet {doc_id} Delete failed", extra={"error" : e})
         raise delete_doc_exception
     return {"deleted_booklet_id": doc_id, "username": user.username}

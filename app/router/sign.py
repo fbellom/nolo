@@ -3,6 +3,10 @@ from fastapi import APIRouter, HTTPException, status, Body
 from handlers.db_handler import NoloUserDB
 from handlers.tkn_handler import NoloToken
 from models.iam_model import User
+import logging
+
+# Create Logger
+logger = logging.getLogger(__name__)
 
 # Module specific Libraries
 

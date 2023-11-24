@@ -3,31 +3,20 @@ import logging
 import os
 from botocore.client import Config
 from botocore.exceptions import ClientError
-from settings.apiconfig import NoloCFG
+from settings.nolo_config import NoloCFG
 
-# from dotenv import load_dotenv
 
-# Load ENV data
-# load_dotenv()
+# Create Logger
+logger = logging.getLogger(__name__)
+
+# Load Config
 cfg = NoloCFG()
 
-# Load AWS Data
-# AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
-# AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
-# REGION_NAME = os.getenv("AWS_DEFAULT_REGION")
 
+# Global AWS IDs
 AWS_ACCESS_KEY_ID = cfg.aws_access_key_id
 AWS_SECRET_ACCESS_KEY = cfg.aws_secret_access_key_id
 REGION_NAME = cfg.aws_default_region
-
-
-# client = boto3.client(
-#     "s3",
-#     aws_access_key_id=AWS_ACCESS_KEY_ID,
-#     aws_secret_access_key=AWS_ACCESS_KEY_ID,
-#     region_name=REGION_NAME,
-# )
-
 
 class NoloBlobAPI:
     """
@@ -90,9 +79,10 @@ class NoloBlobAPI:
     def upload_file(self, filename, file_path):
         try:
             self.bucket.upload_file(filename, self.bucket_name, file_path)
+            logger.info("File Uploaded sucessfully")
             return True
         except ClientError as e:
-            logging.error(e)
+            logger.error(e)
             return False
 
     def get_one_object(self, filename):
@@ -102,7 +92,7 @@ class NoloBlobAPI:
             if response:
                 return True
         except ClientError as e:
-            logging.error(e)
+            logger.error(e)
             return False
 
     def delete_all_objects_from_s3_folder(self, prefix=None):
@@ -128,8 +118,10 @@ class NoloBlobAPI:
                 Bucket=self.bucket_name, Delete={"Objects": files_to_delete}
             )
 
+            logger.info("Bucket content deleted succesfully!")
+
             return True
 
         except ClientError as e:
-            logging.error(e)
+            logger.error(e)
             return False

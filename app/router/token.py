@@ -9,6 +9,10 @@ from models.jwt_model import Token, TokenData
 from handlers.tkn_handler import NoloToken
 from handlers.db_handler import NoloDBHandler, NoloUserDB
 from handlers.dep_handler import get_current_active_user
+import logging
+
+# Create Logger
+logger = logging.getLogger(__name__)
 
 # Global Vars
 MODULE_NAME = "token"

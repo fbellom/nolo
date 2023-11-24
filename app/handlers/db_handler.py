@@ -5,7 +5,12 @@ from botocore.client import Config
 from botocore.exceptions import ClientError
 import logging
 from models.iam_model import User, UserInDB
-from settings.apiconfig import NoloCFG
+from settings.nolo_config import NoloCFG
+
+
+
+# Create Logger
+logger = logging.getLogger(__name__)
 
 # Load ENV data
 # load_dotenv()
@@ -45,13 +50,13 @@ class NoloDBHandler:
 
     def __init__(self, table_name=None):
         self.table_name = table_name or os.getenv("API_DDB_TABLE_NAME")
-        logging.info("NoloDBHandler Created")
+        logger.info("NoloDBHandler Created")
 
     def get_table(self):
         """
         Connect to DDB and get access to the table
         """
-        logging.info("NoloDBHandler Table Conn Created")
+        logger.info("NoloDBHandler Table Conn Created")
         return resource.Table(self.table_name)
 
 
@@ -63,7 +68,7 @@ class NoloUserDB:
     def __init__(self):
         self.user_db = os.getenv("USER_DDB_TABLE_NAME")
         self.table = resource.Table(self.user_db)
-        logging.info("NoloUserDB Object Created")
+        logger.info("NoloUserDB Object Created")
 
     def get_one_user(self, username: str) -> UserInDB:
         table = self.table
@@ -74,7 +79,7 @@ class NoloUserDB:
             logging.warning(f"No User {username} Object at DB")
             return None
 
-        logging.info(f"User {username} Object Found ")
+        logger.info(f"User {username} Object Found ")
         return UserInDB(**user)
 
     def get_all_users(self) -> dict:
@@ -84,14 +89,14 @@ class NoloUserDB:
         )
         data = response["Items"]
 
-        logging.info(f"UserList Object Found ")
+        logger.info(f"UserList Object Found ")
         return data
 
     def insert_user(self, user: User):
         table = self.table
         response = table.put_item(Item=user)
         status_code = response["ResponseMetadata"]["HTTPStatusCode"]
-        logging.info(f"User {user.username} Object created ")
+        logger.info(f"User {user.username} Object created ")
         return status_code
 
     def delete_user(self, username: str):
@@ -99,5 +104,5 @@ class NoloUserDB:
         response = table.delete_item(Key={"username": username})
         status_code = response["ResponseMetadata"]["HTTPStatusCode"]
 
-        logging.info(f"User {username} Object deleted ")
+        logger.info(f"User {username} Object deleted ")
         return status_code

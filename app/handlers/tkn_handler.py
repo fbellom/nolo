@@ -5,7 +5,11 @@ from datetime import datetime, timedelta
 from jose import jwt
 from passlib.context import CryptContext
 import os
+import logging
 
+
+# Create Logger
+logger = logging.getLogger(__name__)
 
 class NoloToken:
     """
@@ -19,6 +23,7 @@ class NoloToken:
         self.token_expires = int(os.getenv("JWT_TOKEN_EXPIRES_MIN"))
         self.token_refresh = int(os.getenv("JWT_TOKEN_REFRESH_MIN"))
         self.pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+        logger.info("Token Backend Object in Use")
 
     def verify_password(self, plain_pwd: str, hashed_pwd: str) -> bool:
         return self.pwd_context.verify(plain_pwd, hashed_pwd)

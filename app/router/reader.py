@@ -1,7 +1,10 @@
 from fastapi import APIRouter, HTTPException, status, UploadFile, File
 from handlers.db_handler import NoloDBHandler
 from models.rdr_model import Booklet, BookletList
+import logging
 
+# Create Logger
+logger = logging.getLogger(__name__)
 
 # Global Vars
 MODULE_NAME = "reader"

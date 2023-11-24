@@ -1,10 +1,14 @@
 import boto3
 import os
 from botocore.client import Config
+import logging
+
+
+# Create Logger
+logger = logging.getLogger(__name__)
 
 # from dotenv import load_dotenv
-
-from settings.apiconfig import NoloCFG
+from settings.nolo_config import NoloCFG
 
 # Load ENV data
 # load_dotenv()

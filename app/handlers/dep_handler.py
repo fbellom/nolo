@@ -6,14 +6,17 @@ from handlers.db_handler import NoloUserDB
 from models.jwt_model import TokenData
 from models.iam_model import User, UserInDB
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-
+import logging
 
 SECRET_KEY = os.getenv("JWT_SECRET_KEY")
 REFRESH_KEY = os.getenv("JWT_REFRESH_SECRET_KEY")
 ALGORITHM = os.getenv("JWT_ALGORITHM")
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+# Create Logger
+logger = logging.getLogger(__name__)
 
+# OAUTH and User DB
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 user_ddb = os.getenv("USER_DDB_TABLE_NAME")
 
 # Handlers
@@ -32,10 +35,12 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
         if username is None:
             raise credentials_exception
         token_data = TokenData(username=username)
-    except JWTError:
+    except JWTError as e:
+        logger.error(e)
         raise credentials_exception
     user = user_db.get_one_user(username=token_data.username)
     if user is None:
+        logger.error(e)
         raise credentials_exception
     return user
 

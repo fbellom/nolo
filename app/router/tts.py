@@ -2,6 +2,10 @@ from fastapi import APIRouter, HTTPException, status, Depends, Body
 from handlers.tts_handler import NoloTTS
 from handlers.dep_handler import get_current_active_user
 from models.iam_model import User
+import logging
+
+# Create Logger
+logger = logging.getLogger(__name__)
 
 
 # Global Vars
@@ -63,6 +67,7 @@ async def call_polly(
     response = polly.convert_to_tts(new_tts_file)
 
     if not response:
+        logger.error("Failed to convert to TTS")
         raise tts_create_exception
 
     return {}

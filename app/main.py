@@ -1,10 +1,14 @@
 from fastapi import FastAPI
-from settings.apiconfig import NoloCFG
+from settings.nolo_config import NoloCFG
 from router import booklet, reader, token, sign, tts
 import uvicorn
 from mangum import Mangum
 from fastapi.middleware.cors import CORSMiddleware
+import logging
 
+
+# Declare a Logger
+logger = logging.getLogger(__name__)
 
 # Load Config
 api_config = NoloCFG()
