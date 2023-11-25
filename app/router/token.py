@@ -2,6 +2,7 @@ import os
 from fastapi import APIRouter, HTTPException, status, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 from typing import Annotated
+from handlers.ral_handler import NoloRateLimit
 
 # Module specific Libraries
 from models.iam_model import User, UserInDB
@@ -19,6 +20,9 @@ MODULE_NAME = "token"
 MODULE_PREFIX = "/token"
 MODULE_TAGS = [MODULE_NAME]
 MODULE_SUMMARY = "Create access and refresh tokens for users"
+MAX_CALLS_ALLOWED_PER_MIN=10
+MAX_TIME_WAIT_429_IN_SECS=60
+MAX_PENALTY_TIME_429_IN_SECS=300
 
 # FastAPI Instance
 router = APIRouter(prefix=MODULE_PREFIX, tags=MODULE_TAGS)
@@ -26,11 +30,20 @@ router = APIRouter(prefix=MODULE_PREFIX, tags=MODULE_TAGS)
 
 # Models
 
+# Rate Limit 10 calls in 60 seconds
+rate_limit = NoloRateLimit(MAX_CALLS_ALLOWED_PER_MIN, 
+                           MAX_TIME_WAIT_429_IN_SECS, 
+                           MAX_PENALTY_TIME_429_IN_SECS)
+
 # Handlers
 iam = NoloToken()
 user_db = NoloUserDB()
 
 # Environment
+
+# Depends
+PROTECTED = Depends(get_current_active_user)
+RATE_LIMIT = Depends(rate_limit)
 
 
 # Utilities Function
@@ -44,7 +57,7 @@ def authenticate_user(username: str, password: str):
 
 
 # Routes
-@router.post("", summary=MODULE_SUMMARY, response_model=Token)
+@router.post("", summary=MODULE_SUMMARY, response_model=Token, dependencies=[RATE_LIMIT])
 async def login_for_access_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
 ):
@@ -65,6 +78,6 @@ async def login_for_access_token(
     }
 
 
-@router.get("/me", summary="Get details of current logged in user", response_model=User)
+@router.get("/me", summary="Get details of current logged in user", response_model=User, dependencies=[RATE_LIMIT])
 async def get_me(current_user: Annotated[User, Depends(get_current_active_user)]):
     return current_user

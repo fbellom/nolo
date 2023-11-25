@@ -4,9 +4,9 @@ from handlers.pdf_handler import NoloPDFHandler
 from handlers.db_handler import NoloDBHandler
 from handlers.s3_handler import NoloBlobAPI
 from handlers.dep_handler import get_current_active_user
+from handlers.ral_handler import NoloRateLimit
 from models.iam_model import User
 from models.rdr_model import Booklet
-from typing import Annotated
 import logging
 
 # Create Logger
@@ -18,6 +18,9 @@ MODULE_NAME = "booklet"
 MODULE_PREFIX = "/booklet"
 MODULE_TAGS = [MODULE_NAME]
 MODULE_DESCRIPTION = ""
+MAX_CALLS_ALLOWED_PER_MIN=10
+MAX_TIME_WAIT_429_IN_SECS=60
+MAX_PENALTY_TIME_429_IN_SECS=300
 
 router = APIRouter(prefix=MODULE_PREFIX, tags=MODULE_TAGS)
 
@@ -28,18 +31,23 @@ blob = NoloBlobAPI()
 # Environment
 upload_path = os.getenv("UPLOAD_PATH")
 
+# Rate Limit 10 calls in 60 seconds
+rate_limit = NoloRateLimit(MAX_CALLS_ALLOWED_PER_MIN, 
+                           MAX_TIME_WAIT_429_IN_SECS, 
+                           MAX_PENALTY_TIME_429_IN_SECS)
+
 # Depends
 PROTECTED = Depends(get_current_active_user)
-
+RATE_LIMIT = Depends(rate_limit)
 
 # Routes
-@router.get("")
-def index():
+@router.get("", dependencies=[PROTECTED, RATE_LIMIT])
+def index(user: User = Depends(get_current_active_user)):
     return {"mesagge": "Hello World", "module": MODULE_NAME}
 
 
-@router.get("/ping")
-def ping():
+@router.get("/ping", dependencies=[PROTECTED, RATE_LIMIT])
+def ping(user: User = Depends(get_current_active_user)):
     return {"message": "pong", "module": MODULE_NAME}
 
 
@@ -47,7 +55,7 @@ def ping():
     "/upload",
     summary="Upload Booklet to be processed",
     response_model=Booklet,
-    dependencies=[PROTECTED],
+    dependencies=[PROTECTED, RATE_LIMIT],
 )
 async def upload_file(
     file: UploadFile = File(...), user: User = Depends(get_current_active_user)
@@ -106,7 +114,7 @@ async def upload_file(
     return file_metadata
 
 
-@router.delete("/{doc_id}", summary="Delete a Booklet", dependencies=[PROTECTED])
+@router.delete("/{doc_id}", summary="Delete a Booklet", dependencies=[PROTECTED, RATE_LIMIT])
 async def delete_one_booklet(
     doc_id: str, user: User = Depends(get_current_active_user)
 ):

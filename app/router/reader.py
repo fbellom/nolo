@@ -1,5 +1,6 @@
-from fastapi import APIRouter, HTTPException, status, UploadFile, File
+from fastapi import APIRouter, HTTPException, Depends
 from handlers.db_handler import NoloDBHandler
+from handlers.ral_handler import NoloRateLimit
 from models.rdr_model import Booklet, BookletList
 import logging
 
@@ -11,12 +12,23 @@ MODULE_NAME = "reader"
 MODULE_PREFIX = "/reader"
 MODULE_TAGS = [MODULE_NAME]
 MODULE_DESCRIPTION = ""
+MAX_CALLS_ALLOWED_PER_MIN=25
+MAX_TIME_WAIT_429_IN_SECS=60
+MAX_PENALTY_TIME_429_IN_SECS=180
 
 # FastAPI Instance
 router = APIRouter(prefix=MODULE_PREFIX, tags=MODULE_TAGS)
 
 # Handlers
 db = NoloDBHandler()
+
+# Rate Limit 20 calls in 60 seconds
+rate_limit = NoloRateLimit(MAX_CALLS_ALLOWED_PER_MIN, 
+                           MAX_TIME_WAIT_429_IN_SECS, 
+                           MAX_PENALTY_TIME_429_IN_SECS)
+
+#Dependencies
+RATE_LIMIT = Depends(rate_limit)
 
 # Models
 
@@ -25,7 +37,7 @@ db = NoloDBHandler()
 
 
 # Routes
-@router.get("")
+@router.get("", dependencies=[RATE_LIMIT])
 def index():
     return {
         "mesagge": f"Hello to module: {MODULE_NAME}",
@@ -33,13 +45,13 @@ def index():
     }
 
 
-@router.get("/ping")
+@router.get("/ping", dependencies=[RATE_LIMIT])
 def ping():
     return {"message": "pong", "module": MODULE_NAME}
 
 
 # TODO: Add URI for Return all the Documents id, Name, Cover Page Thumbnail
-@router.get("/bookshelf", response_model=BookletList)
+@router.get("/bookshelf", response_model=BookletList, dependencies=[RATE_LIMIT])
 def return_all_documents() -> dict:
     """
     return a JSON struct with all doc
@@ -58,7 +70,7 @@ def return_all_documents() -> dict:
     return data
 
 
-@router.get("/bookshelf/{item_id}", response_model=Booklet)
+@router.get("/bookshelf/{item_id}", response_model=Booklet, dependencies=[RATE_LIMIT])
 async def return_one_item(item_id: str):
     """
     GET One Item
