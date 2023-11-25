@@ -6,11 +6,12 @@ load_dotenv()
 
 DESCRIPTION_DATA = """
 NOLO API helps you manage Converted Documents to be displayed by NoloReader App
-## Documents
-CRUD DOcuments for Reader
+## Reader
+CRUD Documents for Reader
 
-## ETL
-Handle the Adquisitions of new documents
+## Booklet
+Proccess new files
+
 """
 AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
