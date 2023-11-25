@@ -70,30 +70,39 @@ async def upload_file(
         raise user_inactive_exception
     
     # Save File Locally
+    logger.info(f"Booklet {file.filename} started!")
     file_location = f"{upload_path}/{file.filename}"
     with open(file_location, "wb") as file_object:
         file_object.write(file.file.read())
 
-    # TODO:
     # Invoke PDF Handler
     pdf_handler = NoloPDFHandler(file_name=file.filename, path=upload_path)
     response = await pdf_handler.async_extract_text_from_file()
     if not response:
+        logger.error("Failed to extract Text from PDF")
         raise HTTPException(status_code=400, detail="Failed to extract Text from File")
 
     response = await pdf_handler.async_create_image_from_file()
     if not response:
+        logger.error("Failed to extract Images from PDF")
         raise HTTPException(status_code=400, detail="Failed to extract Images from PDF")
 
     file_metadata = pdf_handler.get_file_metadata()
     file_metadata.update({"owner_id": user.username})
     #
-    # TODO: Invoke S3 Handler to upload the img ad the txt files
 
-    # TODO: Send file_metadata to DynamoDB
+    #Send file_metadata to DynamoDB
     table = db.get_table()
     table.put_item(Item=file_metadata)
+    logger.info(f"Booklet {file.filename} uploaded sucessfully!")
 
+    # Delete Local Files
+    response = pdf_handler.delete_files_objects()
+    if response == False:
+        logger.error(f"Failed to delete local files")
+        raise HTTPException(status_code=400, detail="Failed to delete local files")
+    
+    logger.info(f"Booklet {file.filename} completed!")
     return file_metadata
 
 

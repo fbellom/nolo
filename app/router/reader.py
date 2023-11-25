@@ -46,7 +46,7 @@ def return_all_documents() -> dict:
     """
     table = db.get_table()
     response = table.scan(
-        ProjectionExpression="doc_id, doc_name, doc_description, number_of_pages, created_at, modify_at, cover_img"
+        ProjectionExpression="doc_id, doc_name, doc_description, number_of_pages,owner_id, created_at, modify_at, cover_img"
     )
     data = response["Items"]
     # data = response["Count"]

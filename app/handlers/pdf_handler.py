@@ -11,6 +11,7 @@ from uuid import uuid4
 from langdetect import detect_langs
 from handlers.s3_handler import NoloBlobAPI
 import logging
+import shutil
 
 # Create Logger
 logger = logging.getLogger(__name__)
@@ -157,6 +158,30 @@ class NoloPDFHandler:
         except Exception as e:
             logger.error(f"Text extraction failed", extra={"error" : e})
             return False
+        
+
+
+    def delete_files_objects(self) -> bool:
+
+        try:
+            # Erase pdf
+            os.remove(self.path)
+            logger.info(f"File {self.path} deleted sucessful!")
+
+            # Erase all Image files
+            shutil.rmtree(f"./{self.out_img_path}/{self.hashed_fname}")
+            logger.info(f"Images files for {self.fname} deleted sucessful!")
+
+            # Erase all Image files
+            shutil.rmtree(f"./{self.out_txt_path}/{self.hashed_fname}")
+            logger.info(f"Text files for {self.fname} deleted sucessful!")
+
+
+        except Exception as e:
+            logger.error(f"Delete Operation failed", extra={"error" : e})
+            return False    
+
+        return True
 
     def _create_dir_sync(self) -> bool:
         try:
