@@ -39,7 +39,7 @@ app.include_router(token.router)
 app.include_router(sign.router)
 app.include_router(reader.router)
 app.include_router(booklet.router)
-app.include_router(tts.router)
+# app.include_router(tts.router)
 # app.include_router(cloudmanager.router)
 
 

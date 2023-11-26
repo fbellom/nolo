@@ -6,7 +6,7 @@ WORKDIR /app
 
 # install dependencies
 COPY requirements.txt .
-RUN pip install  -r requirements.txt --no-cache-dir
+RUN pip install --no-cache-dir --upgrade  -r requirements.txt --no-cache-dir
 
 # # Create Runner
 # FROM python:3.11.6-slim AS runner

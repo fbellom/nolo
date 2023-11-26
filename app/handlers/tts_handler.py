@@ -33,10 +33,11 @@ client = boto3.client(
 
 class NoloTTS:
     def __init__(self, audio_path=None, lang=None, prob=None):
-        self.audio_path = f"{audio_path or os.getenv('OUT_AUDIO_PATH')}"
+        self.audio_path = f"{audio_path or os.getenv('OUT_TTS_PATH')}"
         self.ouput_exists = False
         self.lang = lang or "es"
         self.accuracy = prob or 0
+        self.client = client
 
     def create_dir(self, doc_id: str) -> bool:
         try:

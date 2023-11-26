@@ -9,6 +9,7 @@ class PageElement(BaseModel):
     lang_accuracy: int | None = None
     text: str | None = None
     txt_file_url: HttpUrl | None = None
+    tts_url: HttpUrl | None = None
 
 
 class Page(BaseModel):
