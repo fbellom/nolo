@@ -268,7 +268,7 @@ class NoloPDFHandler:
                 """
                 New Page
                 """
-                logger.info(f"Creating Page {page_num} text info")
+                logger.info(f"Creating Page {page_num} imaging info")
                 file_page = {}
                 file_page["master_doc"] = self.hashed_fname
                 file_page["page_num"] = page_num
@@ -282,7 +282,7 @@ class NoloPDFHandler:
                 """
                 For Existing Pages, Add More MetaData to a Page
                 """
-                logger.info(f"Updating Page {page_num} text info")
+                logger.info(f"Updating Page {page_num} image info")
                 page_data["master_doc"] = self.hashed_fname
                 page_data["file_name"] = img_fname
                 page_data["elements"]["image"] = img_fname
@@ -334,6 +334,7 @@ class NoloPDFHandler:
 
                 # Create TTS File
                 if text != '':
+                    logger.info(f"Creating TTS File for Page {label_num}")
                     # Send Only Text to Lang Detection and TTS
                     lang, prob = self.detect_text_language(text)
                     tts_dict = {
@@ -376,7 +377,7 @@ class NoloPDFHandler:
                     """
                     For Any New Page Collect MetaData
                     """
-                    logger.info(f"Creatingting Page {page_num} image info")
+                    logger.info(f"Creating Page {page_num} text info")
                     file_page = {}
                     file_page["master_doc"] = self.hashed_fname
                     file_page["page_num"] = page_num
@@ -396,7 +397,7 @@ class NoloPDFHandler:
                     """
                     For Existing Pages, just add the text element
                     """
-                    logger.info(f"Updating Page {page_num} image info")
+                    logger.info(f"Updating Page {page_num} text info")
                     page_data["master_doc"] = self.hashed_fname
                     page_data["elements"]["text"] = text
                     page_data["elements"]["lang"] = lang
