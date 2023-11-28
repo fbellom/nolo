@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from handlers.db_handler import NoloDBHandler
 from handlers.ral_handler import NoloRateLimit
+from handlers.s3_handler import NoloBlobAPI
 from models.rdr_model import Booklet, BookletList
 import logging
 
@@ -21,6 +22,7 @@ router = APIRouter(prefix=MODULE_PREFIX, tags=MODULE_TAGS)
 
 # Handlers
 db = NoloDBHandler()
+s3 = NoloBlobAPI()
 
 # Rate Limit 20 calls in 60 seconds
 rate_limit = NoloRateLimit(MAX_CALLS_ALLOWED_PER_MIN, 
@@ -80,6 +82,22 @@ async def return_one_item(item_id: str):
     table = db.get_table()
     response = table.get_item(Key={"doc_id": item_id})
     item = response.get("Item")
+
+    # TODO: Recalculate the presigned URL for each page
+    for page in item["pages"]:
+        page_name = page["file_name"]
+        hashed_name = page["master_doc"]
+        tts_file_key = f"tts/{hashed_name}/{page_name[:-4]}.mp3"
+        img_file_key = f"img/{hashed_name}/{page_name}"
+        txt_file_key = f"txt/{hashed_name}/{page_name[:-4]}.txt" 
+        tts_url = s3.generate_presigned_url(tts_file_key,expires=3600)  
+        img_url = s3.generate_presigned_url(img_file_key,expires=3600)
+        txt_url = s3.generate_presigned_url(txt_file_key,expires=3600)
+        page["elements"]["img_url"] = img_url
+        page["elements"]["tts_url"] = tts_url
+        page["elements"]["txt_file_url"] = txt_url
+
+
 
     if not item:
         raise HTTPException(status_code=404, detail=f" Not item {item_id} in Table")
