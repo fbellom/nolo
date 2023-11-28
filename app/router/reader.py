@@ -65,6 +65,8 @@ def return_all_documents() -> dict:
     data = response["Items"]
     # data = response["Count"]
 
+    #TODO: Calculate Presigned URL for Cover
+
     if not data:
         raise HTTPException(status_code=404, detail=" Not Data in Table")
 
