@@ -17,6 +17,7 @@ cfg = NoloCFG()
 AWS_ACCESS_KEY_ID = cfg.aws_access_key_id
 AWS_SECRET_ACCESS_KEY = cfg.aws_secret_access_key_id
 REGION_NAME = cfg.aws_default_region
+URL_EXPIRATION_IN_SECS = os.getenv("URL_EXPIRATION_IN_SECS")
 
 class NoloBlobAPI:
     """
@@ -34,14 +35,14 @@ class NoloBlobAPI:
         )
         logging.info(f"NoloBlob Object Created")
 
-    def generate_presigned_url(self, filename, expires=3600):
+    def generate_presigned_url(self, filename, expires=URL_EXPIRATION_IN_SECS):
         return self.bucket.generate_presigned_url(
             ClientMethod="get_object",
             ExpiresIn=expires,
             Params={"Bucket": self.bucket_name, "Key": filename},
         )
 
-    def generate_presigned_post_fields(self, path_prefix="", expires=3600):
+    def generate_presigned_post_fields(self, path_prefix="", expires=URL_EXPIRATION_IN_SECS):
         return self.bucket.generate_presigned_post(
             self.bucket_name,
             path_prefix + "${filename}",
