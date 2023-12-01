@@ -258,6 +258,10 @@ class NoloPDFHandler:
                 presigned_url = self.s3_client.generate_presigned_url(
                     s3_img_file_name, expires=os.getenv("URL_EXPIRATION_IN_SECS")
                 )
+             
+            #TODO: AI Image Description. Create Logic to avoid sending Text_only images or blank imnages
+            # Call Polly with a Different Gender (maybe female) from Text Reader 
+
             # cover page
             if page_num == 1:
                 self.file_metadata["cover_img"] = presigned_url
@@ -276,7 +280,7 @@ class NoloPDFHandler:
                 file_page["file_name"] = img_fname
                 file_page["img_url"] = presigned_url
                 self.create_page_index_list(page_num, self.file_page["page_id"])
-                file_page["elements"] = {"image": img_fname, "img_url": presigned_url}
+                file_page["elements"] = {"image": img_fname, "img_url": presigned_url, "img_ai_text" : ""}
                 self.file_metadata["pages"].append(file_page)
             else:
                 """
@@ -287,6 +291,7 @@ class NoloPDFHandler:
                 page_data["file_name"] = img_fname
                 page_data["elements"]["image"] = img_fname
                 page_data["elements"]["img_url"] = presigned_url
+                page_data["elements"]["img_ai_text"] = ""
 
         # TODO: Return File Path
         logger.info("Image Extraction succeded")
@@ -332,7 +337,7 @@ class NoloPDFHandler:
                     s3_txt_file_name, expires=os.getenv("URL_EXPIRATION_IN_SECS")
                 )
 
-                # Create TTS File
+                # Create TTS File - Polly
                 if text != '':
                     logger.info(f"Creating TTS File for Page {label_num}")
                     # Send Only Text to Lang Detection and TTS
@@ -408,5 +413,7 @@ class NoloPDFHandler:
         logger.info("Text Extraction sucedded")
         return self.hashed_fname
 
+# TODO: Flag la pagina que solo tengan texto para no usar el OpenAI para describir la imagen
 
-
+# 101010101__ai_tts_page_00.mp3
+# 101010101__ai_txt_page_00.mp3
