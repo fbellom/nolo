@@ -4,6 +4,7 @@ from router import booklet, reader, token, sign, tts
 import uvicorn
 from mangum import Mangum
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
 import logging
 
 
@@ -22,14 +23,36 @@ app = FastAPI(
     root_path=api_config.root_path,
 )
 
+
+
 # Midelleware
+# Allow these origins to access the API
+ORIGINS = [
+    "http://localhost",
+    "https://localhost:3000",
+    "https://www.noloreader.org",
+    "https://www.nololector.org",
+]
+
+# Allow these methods to be used
+METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE"]
+
+# Only these headers are allowed
+# headers = ["Content-Type", "Authorization"]
+
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=METHODS,
     allow_headers=["*"],
 )
+
+# Entry Point
+@app.get('/', response_class=RedirectResponse, include_in_schema=False)
+async def docs():
+    return RedirectResponse(url='/docs')
 
 # For Serverles Lambda
 handler = Mangum(app)

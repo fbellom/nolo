@@ -77,6 +77,23 @@ async def login_for_access_token(
         "refresh_token": refresh_token,
     }
 
+@router.post("/refresh", summary=MODULE_SUMMARY, response_model=Token, dependencies=[RATE_LIMIT])
+async def get_refresh_token(current_user: Annotated[User, Depends(get_current_active_user)]):
+    if not current_user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    access_token = iam.create_access_token(data={"sub": current_user.username})
+    refresh_token = iam.create_refresh_token(data={"sub": current_user.username})
+
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "refresh_token": refresh_token,
+    }
+
 
 @router.get("/me", summary="Get details of current logged in user", response_model=User, dependencies=[RATE_LIMIT])
 async def get_me(current_user: Annotated[User, Depends(get_current_active_user)]):
