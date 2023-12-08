@@ -52,7 +52,7 @@ app.add_middleware(
 # Entry Point
 @app.get('/', response_class=RedirectResponse, include_in_schema=False)
 async def docs():
-    return RedirectResponse(url='/docs')
+    return RedirectResponse(url='/api/docs')
 
 # For Serverles Lambda
 handler = Mangum(app)

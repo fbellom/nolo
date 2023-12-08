@@ -5,7 +5,7 @@ import logging
 load_dotenv()
 
 DESCRIPTION_DATA = """
-NOLO API helps you manage Converted Documents to be displayed by NoloReader App
+NOLO Booklet API helps you manage Converted Documents to be displayed by NoloReader App
 ## Reader
 CRUD Documents for Reader
 
@@ -28,7 +28,7 @@ class NoloCFG:
     """
 
     def __init__(self):
-        self.title = "NOLO API Backend"
+        self.title = "NOLO Booklet API Backend"
         self.description = DESCRIPTION_DATA
         self.version = f"1.0.2" or os.getenv("API_VERSION")
         self.secret_key = "" or os.getenv("SECRET_KEY")

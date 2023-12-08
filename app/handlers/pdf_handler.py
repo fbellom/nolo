@@ -48,7 +48,7 @@ class NoloPDFHandler:
         self.ouput_exists = self.create_dir()
         self.s3_client = NoloBlobAPI()
 
-        logger.info("PDF Handler Created")
+        logger.info("Booklet Handler Created")
 
     # Utilities Functions
     def create_fname_hash(self):
@@ -154,7 +154,7 @@ class NoloPDFHandler:
     def delete_files_objects(self) -> bool:
 
         try:
-            # Erase pdf
+            # Erase Booklet
             os.remove(self.path)
             logger.info(f"File {self.path} deleted sucessful!")
 
@@ -180,17 +180,17 @@ class NoloPDFHandler:
             #Create Text Files Temporary Dir
             if not os.path.exists(f"./{self.out_txt_path}/{self.hashed_fname}"):
                 os.makedirs(f"./{self.out_txt_path}/{self.hashed_fname}")
-                logger.info(f"PDF Text path for booklet {self.hashed_fname} created sucessfuly!")
+                logger.info(f"Text path for Booklet {self.hashed_fname} created sucessfuly!")
 
             #Create Image File Temporary Dir
             if not os.path.exists(f"./{self.out_img_path}/{self.hashed_fname}"):
                 os.makedirs(f"./{self.out_img_path}/{self.hashed_fname}")
-                logger.info(f"PDF Image path for booklet {self.hashed_fname} created sucessfuly!")
+                logger.info(f"Image path for Booklet {self.hashed_fname} created sucessfuly!")
             
             #Create TTS Temporary dir
             if not os.path.exists(f"./{self.out_tts_path}/{self.hashed_fname}"):
                 os.makedirs(f"./{self.out_tts_path}/{self.hashed_fname}")
-                logger.info(f"PDF TTS path for booklet {self.hashed_fname} created sucessfuly!")    
+                logger.info(f"TTS path for Booklet {self.hashed_fname} created sucessfuly!")    
 
             return True
         except Exception as e:
@@ -205,7 +205,7 @@ class NoloPDFHandler:
                 result = await loop.run_in_executor(
                     pool, self._extract_text_from_file_sync
                 )
-            logger.info("PDF Text extracted sucessfuly!")    
+            logger.info("Booklet Text extracted sucessfuly!")    
             return result
         except Exception as e:
             logger.error(f"Text extraction failed: REASON: {e}", extra={"error" : e})
@@ -219,7 +219,7 @@ class NoloPDFHandler:
                 result = await loop.run_in_executor(
                     pool, self._create_image_from_file_sync
                 )
-            logger.info("PDF Images extracted sucessfuly!")      
+            logger.info("Booklet Images extracted sucessfuly!")      
             return result
         except Exception as e:
             logger.error(f"Image extraction failed: REASON: {e}", extra={"error" : e})
@@ -280,7 +280,12 @@ class NoloPDFHandler:
                 file_page["file_name"] = img_fname
                 file_page["img_url"] = presigned_url
                 self.create_page_index_list(page_num, self.file_page["page_id"])
-                file_page["elements"] = {"image": img_fname, "img_url": presigned_url, "img_ai_text" : ""}
+                file_page["elements"] = {
+                    "image": img_fname, 
+                    "img_url": presigned_url, 
+                    "img_text" : "", 
+                    "create_img_tts" : False,
+                    }
                 self.file_metadata["pages"].append(file_page)
             else:
                 """
@@ -291,20 +296,21 @@ class NoloPDFHandler:
                 page_data["file_name"] = img_fname
                 page_data["elements"]["image"] = img_fname
                 page_data["elements"]["img_url"] = presigned_url
-                page_data["elements"]["img_ai_text"] = ""
+                page_data["elements"]["img_text"] = ""
+                page_data["elements"]["create_img_tts"] = False
 
         # TODO: Return File Path
-        logger.info("Image Extraction succeded")
+        logger.info("Booklet Image Extraction succeded")
         return self.hashed_fname
 
     def _extract_text_from_file_sync(self) -> bool:
 
-        pdf_file = fitz.open(self.path)
+        booklet_file = fitz.open(self.path)
 
 
         # Retrieve Text
-        self.file_metadata["number_of_pages"] = len(pdf_file)
-        for page_num, page in enumerate(pdf_file.pages(), start=1):
+        self.file_metadata["number_of_pages"] = len(booklet_file)
+        for page_num, page in enumerate(booklet_file.pages(), start=1):
             text = page.get_text()
             text = cleaner.remove_unwanted_text(text)
 
@@ -394,7 +400,8 @@ class NoloPDFHandler:
                         "lang": lang,
                         "lang_accuracy": prob,
                         "txt_file_url": presigned_url,
-                        "tts_url" : tts_presigned_url
+                        "tts_url" : tts_presigned_url,
+                        "create_txt_tts" : False
                     }
                     self.file_metadata["pages"].append(file_page)
 
@@ -409,6 +416,7 @@ class NoloPDFHandler:
                     page_data["elements"]["lang_accuracy"] = prob
                     page_data["elements"]["txt_file_url"] = presigned_url
                     page_data["elements"]["tts_url"] = tts_presigned_url
+                    page_data["elements"]["create_txt_tts"] = False
 
         logger.info("Text Extraction sucedded")
         return self.hashed_fname
