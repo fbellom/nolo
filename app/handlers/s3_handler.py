@@ -19,6 +19,7 @@ AWS_SECRET_ACCESS_KEY = cfg.aws_secret_access_key_id
 REGION_NAME = cfg.aws_default_region
 URL_EXPIRATION_IN_SECS = os.getenv("URL_EXPIRATION_IN_SECS")
 
+
 class NoloBlobAPI:
     """
     S3 Objects Handler
@@ -42,7 +43,9 @@ class NoloBlobAPI:
             Params={"Bucket": self.bucket_name, "Key": filename},
         )
 
-    def generate_presigned_post_fields(self, path_prefix="", expires=URL_EXPIRATION_IN_SECS):
+    def generate_presigned_post_fields(
+        self, path_prefix="", expires=URL_EXPIRATION_IN_SECS
+    ):
         return self.bucket.generate_presigned_post(
             self.bucket_name,
             path_prefix + "${filename}",

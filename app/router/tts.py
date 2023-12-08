@@ -14,9 +14,9 @@ MODULE_NAME = "tts"
 MODULE_PREFIX = "/tts"
 MODULE_TAGS = [MODULE_NAME]
 MODULE_DESCRIPTION = ""
-MAX_CALLS_ALLOWED_PER_MIN=10
-MAX_TIME_WAIT_429_IN_SECS=60
-MAX_PENALTY_TIME_429_IN_SECS=300
+MAX_CALLS_ALLOWED_PER_MIN = 10
+MAX_TIME_WAIT_429_IN_SECS = 60
+MAX_PENALTY_TIME_429_IN_SECS = 300
 
 router = APIRouter(prefix=MODULE_PREFIX, tags=MODULE_TAGS)
 
@@ -25,9 +25,9 @@ router = APIRouter(prefix=MODULE_PREFIX, tags=MODULE_TAGS)
 polly = NoloTTS()
 
 # Rate Limit 10 calls in 60 seconds
-rate_limit = NoloRateLimit(MAX_CALLS_ALLOWED_PER_MIN, 
-                           MAX_TIME_WAIT_429_IN_SECS, 
-                           MAX_PENALTY_TIME_429_IN_SECS)
+rate_limit = NoloRateLimit(
+    MAX_CALLS_ALLOWED_PER_MIN, MAX_TIME_WAIT_429_IN_SECS, MAX_PENALTY_TIME_429_IN_SECS
+)
 
 # Depends
 PROTECTED = Depends(get_current_active_user)
@@ -35,12 +35,12 @@ RATE_LIMIT = Depends(rate_limit)
 
 
 # Routes
-@router.get("", dependencies=[PROTECTED,RATE_LIMIT])
+@router.get("", dependencies=[PROTECTED, RATE_LIMIT])
 def index(user: User = Depends(get_current_active_user)):
     return {"mesagge": "Hello World", "module": MODULE_NAME}
 
 
-@router.get("/ping", dependencies=[PROTECTED,RATE_LIMIT])
+@router.get("/ping", dependencies=[PROTECTED, RATE_LIMIT])
 def ping(user: User = Depends(get_current_active_user)):
     return {"message": "pong", "module": MODULE_NAME}
 

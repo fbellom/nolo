@@ -24,7 +24,6 @@ app = FastAPI(
 )
 
 
-
 # Midelleware
 # Allow these origins to access the API
 ORIGINS = [
@@ -49,10 +48,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 # Entry Point
-@app.get('/', response_class=RedirectResponse, include_in_schema=False)
+@app.get("/", response_class=RedirectResponse, include_in_schema=False)
 async def docs():
-    return RedirectResponse(url='/api/docs')
+    return RedirectResponse(url="/docs")
+
 
 # For Serverles Lambda
 handler = Mangum(app)

@@ -8,7 +8,6 @@ from models.iam_model import User, UserInDB
 from settings.nolo_config import NoloCFG
 
 
-
 # Create Logger
 logger = logging.getLogger(__name__)
 

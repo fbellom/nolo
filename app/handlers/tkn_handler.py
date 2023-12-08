@@ -11,6 +11,7 @@ import logging
 # Create Logger
 logger = logging.getLogger(__name__)
 
+
 class NoloToken:
     """
     Token Manager

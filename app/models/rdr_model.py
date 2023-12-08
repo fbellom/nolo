@@ -1,5 +1,6 @@
 import datetime
 from pydantic import BaseModel, HttpUrl, RootModel, Field, constr
+from fastapi import File, UploadFile, Form
 from typing import List, Optional
 
 
@@ -13,8 +14,12 @@ class PageElement(BaseModel):
     tts_url: Optional[HttpUrl] = None
     img_text: Optional[constr(max_length=300)] = None
     img_tts_url: Optional[HttpUrl] = None
-    create_img_tts :   bool = Field(default=True, description="Indicates if the page is ready for text-to-speech")
-    create_txt_tts :   bool = Field(default=True, description="Indicates if the page is ready for text-to-speech")
+    create_img_tts: bool = Field(
+        default=True, description="Indicates if the page is ready for text-to-speech"
+    )
+    create_txt_tts: bool = Field(
+        default=True, description="Indicates if the page is ready for text-to-speech"
+    )
 
 
 class Page(BaseModel):
@@ -31,30 +36,39 @@ class Booklet(BaseModel):
     doc_title: Optional[str] = None
     doc_description: Optional[constr(max_length=300)] = None
     number_of_pages: Optional[int] = None
-    created_at: int = Field(default_factory=lambda: int(datetime.datetime.now().timestamp()))
-    modify_at: int = Field(default_factory=lambda: int(datetime.datetime.now().timestamp()))
+    created_at: int = Field(
+        default_factory=lambda: int(datetime.datetime.now().timestamp())
+    )
+    modify_at: int = Field(
+        default_factory=lambda: int(datetime.datetime.now().timestamp())
+    )
     owner_id: Optional[str] = None
     cover_img: Optional[HttpUrl] = None
-    is_published: bool = Field(default=True, description="Indicates if the booklet is published")
-    tts_ready: bool = Field(default=True, description="Indicates if the booklet is ready for text-to-speech")
-    pages: Optional[list[Page]] = None    
+    is_published: bool = Field(
+        default=True, description="Indicates if the booklet is published"
+    )
+    tts_ready: bool = Field(
+        default=True, description="Indicates if the booklet is ready for text-to-speech"
+    )
+    pages: Optional[list[Page]] = None
 
 
 class BookletList(RootModel[List[Booklet]]):
     root: List[Booklet]
 
 
-
 # Partial Edits Models
 class PageElementEdit(BaseModel):
     text: Optional[str] = None
     img_text: Optional[constr(max_length=300)] = None
+
+
 class PageEdit(BaseModel):
     page_num: Optional[int] = None
     elements: PageElementEdit | None = None
+
 
 class BookletEdit(BaseModel):
     doc_title: Optional[str] = None
     doc_description: Optional[str] = None
     pages: list[PageEdit] | None = None
-

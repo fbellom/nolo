@@ -14,9 +14,9 @@ MODULE_NAME = "reader"
 MODULE_PREFIX = "/reader"
 MODULE_TAGS = [MODULE_NAME]
 MODULE_DESCRIPTION = ""
-MAX_CALLS_ALLOWED_PER_MIN=25
-MAX_TIME_WAIT_429_IN_SECS=60
-MAX_PENALTY_TIME_429_IN_SECS=180
+MAX_CALLS_ALLOWED_PER_MIN = 25
+MAX_TIME_WAIT_429_IN_SECS = 60
+MAX_PENALTY_TIME_429_IN_SECS = 180
 URL_EXPIRATION_IN_SECS = os.getenv("URL_EXPIRATION_IN_SECS")
 
 # FastAPI Instance
@@ -27,11 +27,11 @@ db = NoloDBHandler()
 s3 = NoloBlobAPI()
 
 # Rate Limit 20 calls in 60 seconds
-rate_limit = NoloRateLimit(MAX_CALLS_ALLOWED_PER_MIN, 
-                           MAX_TIME_WAIT_429_IN_SECS, 
-                           MAX_PENALTY_TIME_429_IN_SECS)
+rate_limit = NoloRateLimit(
+    MAX_CALLS_ALLOWED_PER_MIN, MAX_TIME_WAIT_429_IN_SECS, MAX_PENALTY_TIME_429_IN_SECS
+)
 
-#Dependencies
+# Dependencies
 RATE_LIMIT = Depends(rate_limit)
 
 # Models
@@ -67,11 +67,11 @@ def return_all_documents() -> dict:
     data = response["Items"]
     # data = response["Count"]
 
-    #TODO: Calculate Presigned URL for Cover
+    # TODO: Calculate Presigned URL for Cover
     for item in data:
         img_file_key = f"img/{item['doc_id']}/{item['doc_id']}_page_01.png"
         cover_img = s3.generate_presigned_url(img_file_key)
-        item['cover_img'] = cover_img
+        item["cover_img"] = cover_img
 
     if not data:
         raise HTTPException(status_code=404, detail=" Not Data in Table")
@@ -97,15 +97,13 @@ async def return_one_item(item_id: str):
         hashed_name = page["master_doc"]
         tts_file_key = f"tts/{hashed_name}/{page_name[:-4]}.mp3"
         img_file_key = f"img/{hashed_name}/{page_name}"
-        txt_file_key = f"txt/{hashed_name}/{page_name[:-4]}.txt" 
-        tts_url = s3.generate_presigned_url(tts_file_key)  
+        txt_file_key = f"txt/{hashed_name}/{page_name[:-4]}.txt"
+        tts_url = s3.generate_presigned_url(tts_file_key)
         img_url = s3.generate_presigned_url(img_file_key)
         txt_url = s3.generate_presigned_url(txt_file_key)
         page["elements"]["img_url"] = img_url
         page["elements"]["tts_url"] = tts_url
         page["elements"]["txt_file_url"] = txt_url
-
-
 
     if not item:
         raise HTTPException(status_code=404, detail=f" Not item {item_id} in Table")

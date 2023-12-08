@@ -20,9 +20,9 @@ MODULE_NAME = "token"
 MODULE_PREFIX = "/token"
 MODULE_TAGS = [MODULE_NAME]
 MODULE_SUMMARY = "Create access and refresh tokens for users"
-MAX_CALLS_ALLOWED_PER_MIN=10
-MAX_TIME_WAIT_429_IN_SECS=60
-MAX_PENALTY_TIME_429_IN_SECS=300
+MAX_CALLS_ALLOWED_PER_MIN = 10
+MAX_TIME_WAIT_429_IN_SECS = 60
+MAX_PENALTY_TIME_429_IN_SECS = 300
 
 # FastAPI Instance
 router = APIRouter(prefix=MODULE_PREFIX, tags=MODULE_TAGS)
@@ -31,9 +31,9 @@ router = APIRouter(prefix=MODULE_PREFIX, tags=MODULE_TAGS)
 # Models
 
 # Rate Limit 10 calls in 60 seconds
-rate_limit = NoloRateLimit(MAX_CALLS_ALLOWED_PER_MIN, 
-                           MAX_TIME_WAIT_429_IN_SECS, 
-                           MAX_PENALTY_TIME_429_IN_SECS)
+rate_limit = NoloRateLimit(
+    MAX_CALLS_ALLOWED_PER_MIN, MAX_TIME_WAIT_429_IN_SECS, MAX_PENALTY_TIME_429_IN_SECS
+)
 
 # Handlers
 iam = NoloToken()
@@ -57,7 +57,9 @@ def authenticate_user(username: str, password: str):
 
 
 # Routes
-@router.post("", summary=MODULE_SUMMARY, response_model=Token, dependencies=[RATE_LIMIT])
+@router.post(
+    "", summary=MODULE_SUMMARY, response_model=Token, dependencies=[RATE_LIMIT]
+)
 async def login_for_access_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
 ):
@@ -77,8 +79,13 @@ async def login_for_access_token(
         "refresh_token": refresh_token,
     }
 
-@router.post("/refresh", summary=MODULE_SUMMARY, response_model=Token, dependencies=[RATE_LIMIT])
-async def get_refresh_token(current_user: Annotated[User, Depends(get_current_active_user)]):
+
+@router.post(
+    "/refresh", summary=MODULE_SUMMARY, response_model=Token, dependencies=[RATE_LIMIT]
+)
+async def get_refresh_token(
+    current_user: Annotated[User, Depends(get_current_active_user)]
+):
     if not current_user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -95,6 +102,11 @@ async def get_refresh_token(current_user: Annotated[User, Depends(get_current_ac
     }
 
 
-@router.get("/me", summary="Get details of current logged in user", response_model=User, dependencies=[RATE_LIMIT])
+@router.get(
+    "/me",
+    summary="Get details of current logged in user",
+    response_model=User,
+    dependencies=[RATE_LIMIT],
+)
 async def get_me(current_user: Annotated[User, Depends(get_current_active_user)]):
     return current_user
