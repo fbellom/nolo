@@ -32,6 +32,8 @@ ORIGINS = [
     "http://localhost:5173",
     "https://www.noloreader.org",
     "https://www.nololector.org",
+    "http://elk.latampod.com:3006",
+    "http://10.60.25.20:3006",
 ]
 
 # Allow these methods to be used
