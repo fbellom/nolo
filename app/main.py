@@ -28,7 +28,8 @@ app = FastAPI(
 # Allow these origins to access the API
 ORIGINS = [
     "http://localhost",
-    "https://localhost:3000",
+    "http://localhost:3000",
+    "http://localhost:5173",
     "https://www.noloreader.org",
     "https://www.nololector.org",
 ]
