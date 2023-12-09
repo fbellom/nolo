@@ -1,7 +1,7 @@
 # Makefile for building and managing a Docker container
 
 # Image name
-IMAGE_NAME := noloreader/backend
+IMAGE_NAME := noloreader/proxy
 
 # Image tag
 IMAGE_TAG := latest
@@ -36,15 +36,3 @@ push: tag
 clean:
 	docker rmi $(IMAGE_NAME):$(IMAGE_TAG)
 	docker rmi $(FULL_IMAGE_NAME)
-
-# # Example additional commands for running and stopping the container
-# # Start the Docker container
-# .PHONY: run
-# run:
-# 	docker run -d --name nolo-api -p 8000:8000 $(IMAGE_NAME):$(IMAGE_TAG)
-
-# # Stop and remove the Docker container
-# .PHONY: stop
-# stop:
-# 	docker stop my-container
-# 	docker rm my-container
