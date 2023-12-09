@@ -1,0 +1,124 @@
+{
+  "containerDefinitions": [
+    {
+      "name": "nolo-api",
+      "image": "536422989755.dkr.ecr.us-east-1.amazonaws.com/noloreader/backend:latest",
+      "cpu": 512,
+      "memory": 512,
+      "portMappings": [
+        {
+          "name": "nolo-api-8000-tcp",
+          "containerPort": 8000,
+          "hostPort": 8000,
+          "protocol": "tcp",
+          "appProtocol": "http"
+        }
+      ],
+      "essential": true,
+      "environment": [],
+      "environmentFiles": [
+        {
+          "value": "arn:aws:s3:::noloreaderblob/nolo-envars.env",
+          "type": "s3"
+        }
+      ],
+      "mountPoints": [],
+      "volumesFrom": [],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-create-group": "true",
+          "awslogs-group": "/ecs/nolo-api-tasks",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "ecs"
+        },
+        "secretOptions": []
+      }
+    },
+    {
+      "name": "nolopxy",
+      "image": "536422989755.dkr.ecr.us-east-1.amazonaws.com/noloreader/proxy",
+      "cpu": 256,
+      "memory": 512,
+      "portMappings": [
+        {
+          "name": "nolopxy-80-tcp",
+          "containerPort": 80,
+          "hostPort": 80,
+          "protocol": "tcp",
+          "appProtocol": "http"
+        }
+      ],
+      "essential": false,
+      "environment": [],
+      "mountPoints": [],
+      "volumesFrom": [],
+      "dependsOn": [
+        {
+          "containerName": "nolo-api",
+          "condition": "START"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-create-group": "true",
+          "awslogs-group": "/ecs/nolo-api-tasks",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "ecs"
+        },
+        "secretOptions": []
+      }
+    },
+    {
+      "name": "nolo-web",
+      "image": "536422989755.dkr.ecr.us-east-1.amazonaws.com/noloreader/frontend",
+      "cpu": 256,
+      "memory": 512,
+      "memoryReservation": 512,
+      "portMappings": [
+        {
+          "name": "3000",
+          "containerPort": 3000,
+          "hostPort": 3000,
+          "protocol": "tcp",
+          "appProtocol": "http"
+        }
+      ],
+      "essential": false,
+      "environment": [],
+      "environmentFiles": [],
+      "mountPoints": [],
+      "volumesFrom": [],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-create-group": "true",
+          "awslogs-group": "/ecs/nolo-api-tasks",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "ecs"
+        },
+        "secretOptions": []
+      }
+    }
+  ],
+  "family": "nolo-api-tasks",
+  "taskRoleArn": "arn:aws:iam::536422989755:role/ecsTaskExecutionRole",
+  "executionRoleArn": "arn:aws:iam::536422989755:role/ecsTaskExecutionRole",
+  "networkMode": "awsvpc",
+  "volumes": [],
+  "placementConstraints": [],
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "1024",
+  "memory": "2048",
+  "runtimePlatform": {
+    "cpuArchitecture": "X86_64",
+    "operatingSystemFamily": "LINUX"
+  },
+  "tags": [
+    {
+      "key": "app-name",
+      "value": "nolo-backend"
+    }
+  ]
+}

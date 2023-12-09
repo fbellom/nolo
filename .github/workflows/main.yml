@@ -9,7 +9,7 @@ env:
   ECS_CLUSTER: nolo-app-cluster
   CONTAINER_NAME: nolo-api
   ECS_SERVICE: nolo-api-svc-v7-2
-  ECS_TD: .github/workflows/td.json
+  ECS_TD: .github/workflows/stack.json
 
 jobs:
   deploy:
