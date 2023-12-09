@@ -7,7 +7,7 @@ on:
 env:
   AWS_REGION: us-east-1
   ECS_CLUSTER: nolo-app-cluster
-  CONTAINER_NAME: nolo-pxy
+  CONTAINER_NAME: nolo-api
   ECS_SERVICE: nolo-api-svc-v7-2
   ECS_TD: .github/workflows/td.json
 
@@ -31,14 +31,14 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
-      - name: Build, tag and push to Amazon ECR
-        id: build-image
+      - name: Build, tag and push Backend to Amazon ECR
+        id: build-api-image
         env:
           ECR_REGISTRY: "536422989755.dkr.ecr.us-east-1.amazonaws.com"
-          ECR_REPOSITORY: "noloreader/proxy"
+          ECR_REPOSITORY: "noloreader/backend"
           IMAGE_TAG: latest
         run: |
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG app/.
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
 
@@ -48,7 +48,26 @@ jobs:
         with:
           task-definition: ${{ env.ECS_TD }}
           container-name: ${{ env.CONTAINER_NAME }}
-          image: ${{ steps.build-image.outputs.image }}
+          image: ${{ steps.build-api-image.outputs.image }}
+
+      - name: Build, tag and push Backend to Amazon ECR
+        id: build-pxy-image
+        env:
+          ECR_REGISTRY: "536422989755.dkr.ecr.us-east-1.amazonaws.com"
+          ECR_REPOSITORY: "noloreader/proxy"
+          IMAGE_TAG: latest
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG app/.
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+
+      - name: Fill in the new image ID in the Amazon ECS Task Definition
+        id: task-def-2
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: ${{ env.ECS_TD }}
+          container-name: ${{ env.CONTAINER_NAME }}
+          image: ${{ steps.build-pxy-image.outputs.image }}
 
       - name: Deploy Amazon ECS task Definition
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
@@ -56,4 +75,4 @@ jobs:
           task-definition: ${{ steps.task-def-1.outputs.task-definition }}
           service: ${{ env.ECS_SERVICE }}
           cluster: ${{ env.ECS_CLUSTER }}
-          wait-for-service-stability: false
+          wait-for-service-stability: true
