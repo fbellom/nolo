@@ -1,8 +1,13 @@
 # Create the builder Backend
 FROM python:3.11.6-slim AS builder
-LABEL 'maintainer' 'frbello@cisco.com'
+LABEL 'maintainer' 'freddy.bello@upr.edu'
 
 WORKDIR /app
+
+# Install poppler utility for PDF Processing and clean up
+RUN apt-get update \
+    && apt-get install -y poppler-utils \
+    && rm -rf /var/lib/apt/lists/*
 
 # install dependencies
 COPY requirements.txt .
