@@ -4,8 +4,8 @@ from fastapi import Depends, HTTPException, status
 from jose import JWTError, jwt
 from handlers.db_handler import NoloUserDB
 from models.jwt_model import TokenData
-from models.iam_model import User, UserInDB
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from models.iam_model import User
+from fastapi.security import OAuth2PasswordBearer
 import logging
 
 SECRET_KEY = os.getenv("JWT_SECRET_KEY")
@@ -40,7 +40,7 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
         raise credentials_exception
     user = user_db.get_one_user(username=token_data.username)
     if user is None:
-        logger.error(e)
+        logger.error("Not User in DB")
         raise credentials_exception
     return user
 

@@ -1,14 +1,13 @@
-import os
 from fastapi import APIRouter, HTTPException, status, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 from typing import Annotated
 from handlers.ral_handler import NoloRateLimit
 
 # Module specific Libraries
-from models.iam_model import User, UserInDB
-from models.jwt_model import Token, TokenData
+from models.iam_model import User
+from models.jwt_model import Token
 from handlers.tkn_handler import NoloToken
-from handlers.db_handler import NoloDBHandler, NoloUserDB
+from handlers.db_handler import NoloUserDB
 from handlers.dep_handler import get_current_active_user
 import logging
 

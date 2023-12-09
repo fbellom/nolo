@@ -1,5 +1,4 @@
 import time
-import os
 from fastapi import Request, HTTPException
 import logging
 

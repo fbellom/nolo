@@ -251,7 +251,9 @@ async def update_one_booklet(
 
         return {"booklet_id": doc_id, "username": user.username, "item": item}
     except Exception as e:
-        logger.error(f"Booklet {doc_id} Update failed. Reason: {e}", extra={"error": e})
+        logger.error(
+            f"Booklet {doc_id} Update failed. Reason: {e}", extra={"error": udpd_expr}
+        )
         raise update_doc_exception
 
 
@@ -316,7 +318,9 @@ async def toogle_visibility_booklet(
         }
 
     except Exception as e:
-        logger.error(f"Booklet {doc_id} Update failed. Reason: {e}", extra={"error": e})
+        logger.error(
+            f"Booklet {doc_id} Update failed. Reason: {e}", extra={"error": udpd_expr}
+        )
         raise update_doc_exception
 
 

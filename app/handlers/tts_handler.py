@@ -1,17 +1,14 @@
-import boto3
 import os
-from botocore.client import Config
 import logging
+import io
+import boto3
+from settings.nolo_config import NoloCFG
 
 
 # Create Logger
 logger = logging.getLogger(__name__)
 
-# from dotenv import load_dotenv
-from settings.nolo_config import NoloCFG
-
 # Load ENV data
-# load_dotenv()
 cfg = NoloCFG()
 
 # Load AWS Data
@@ -50,18 +47,11 @@ class NoloTTS:
 
     def convert_to_tts(self, new_tts_file: dict) -> bool:
         """
-        Convert text to audio
+        Convert text to audio in Memory
         """
 
-        # Create The Directory if not exists
-        self.ouput_exists = self.create_dir(new_tts_file.get("doc_id"))
+        VoiceId = "Penelope" if new_tts_file["gender"] == "female" else "Miguel"
 
-        if new_tts_file["gender"] == "female":
-            VoiceId = "Penelope"
-        else:
-            VoiceId = "Miguel"
-
-        filename = f"{new_tts_file.get('page_id')}_{new_tts_file.get('filename')}.mp3"
         response = client.synthesize_speech(
             VoiceId=VoiceId,
             OutputFormat="mp3",
@@ -69,9 +59,7 @@ class NoloTTS:
             Engine="standard",
         )
 
-        file_name = f"./{self.audio_path}/{self.hashed_name}/{filename}"
+        audio_stream = io.BytesIO(response["AudioStream"].read())
+        logger.info("TTS Creation success!")
 
-        with open(file_name, "wb") as tts:
-            tts.write(response["AudioStream"].read())
-
-        return True
+        return audio_stream

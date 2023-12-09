@@ -1,8 +1,5 @@
 import boto3
 import os
-from dotenv import load_dotenv
-from botocore.client import Config
-from botocore.exceptions import ClientError
 import logging
 from models.iam_model import User, UserInDB
 from settings.nolo_config import NoloCFG
@@ -88,7 +85,7 @@ class NoloUserDB:
         )
         data = response["Items"]
 
-        logger.info(f"UserList Object Found ")
+        logger.info("UserList Object Found ")
         return data
 
     def insert_user(self, user: User):

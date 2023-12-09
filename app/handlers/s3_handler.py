@@ -34,7 +34,7 @@ class NoloBlobAPI:
             region_name=REGION_NAME,
             config=Config(signature_version="s3v4", s3={"addressing_style": "path"}),
         )
-        logging.info(f"NoloBlob Object Created")
+        logging.info("NoloBlob Object Created")
 
     def generate_presigned_url(self, filename, expires=URL_EXPIRATION_IN_SECS):
         return self.bucket.generate_presigned_url(
@@ -51,14 +51,6 @@ class NoloBlobAPI:
             path_prefix + "${filename}",
             ExpiresIn=expires,
         )
-
-        """
-            RETURNS : 
-            {
-                "fields": {...},
-                "url": "https://s3.us-east-2.amazonaws.com/presigned-test"
-            }
-        """
 
     def get_files(self, path_prefix=""):
         object_list = self.bucket.list_objects(

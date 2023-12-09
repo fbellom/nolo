@@ -1,5 +1,5 @@
 import uuid
-from fastapi import APIRouter, Depends, HTTPException, status, Body
+from fastapi import APIRouter, Depends, status, Body
 from handlers.db_handler import NoloUserDB
 from handlers.tkn_handler import NoloToken
 from handlers.ral_handler import NoloRateLimit

@@ -28,33 +28,33 @@ class NoloCleaner:
         try:
             # Step 1: Remove New Line \n
             cleaned_text = re.sub(NEW_LINE_PATTERN, "", TEXT_SOURCE)
-            logger.info(f"New Line Removed")
+            logger.info("New Line Removed")
 
             # cleaned_text = cleaned_text.strip()
 
             cleaned_text = re.sub(NUMBER_AT_START, "", cleaned_text)
-            logger.info(f"NUMBER Line Removed")
+            logger.info("NUMBER Line Removed")
 
             # Step 2: Remove URL References
             cleaned_text = re.sub(URL_PATTERN, "", cleaned_text)
-            logger.info(f"URL Line Removed")
+            logger.info("URL Line Removed")
 
             # Step 2.1: Remove WWW References
             cleaned_text = re.sub(WWW_PATTERN, "", cleaned_text)
-            logger.info(f"WWW Line Removed")
+            logger.info("WWW Line Removed")
 
             # Step 2.2: Copy Right
             cleaned_text = cleaned_text.encode("utf-8")
             cleaned_text = re.sub(COPYRIGHT_MARK, "", cleaned_text.decode("utf-8"))
-            logger.info(f"COPYRYGHT Line Removed")
+            logger.info("COPYRYGHT Line Removed")
 
             # Step 3: Remove any Email references
             cleaned_text = re.sub(EMAIL_PATTERN, "", cleaned_text)
-            logger.info(f"Email Line Removed")
+            logger.info("Email Line Removed")
 
             # Final Stage put all in one line
             cleaned_text = cleaned_text.replace("\n", " ").strip()
-            logger.info(f"Text Cleaning Complete")
+            logger.info("Text Cleaning Complete")
 
             return cleaned_text
         except Exception as e:

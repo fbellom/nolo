@@ -1,6 +1,5 @@
 import datetime
 from pydantic import BaseModel, HttpUrl, RootModel, Field, constr
-from fastapi import File, UploadFile, Form
 from typing import List, Optional
 
 

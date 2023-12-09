@@ -2,8 +2,7 @@ import time
 import io
 import os
 import hashlib
-from pathlib import Path
-from pdf2image import convert_from_path, convert_from_bytes
+from pdf2image import convert_from_bytes
 import fitz
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
@@ -93,10 +92,15 @@ class NoloPDFHandler:
             page_data_dict = self.file_metadata["pages"][int(page_num) - 1]
             return page_data_dict
         except IndexError as e:
-            logger.info(f"Creating a new Page {page_num} ", extra={"error": "New Page"})
+            logger.info(
+                f"Error Creating a new Page {page_num} REASON: {e} ",
+                extra={"error": "New Page"},
+            )
             return None
         except Exception as e:
-            logger.error(f"Failed to located a Page {page_num}", extra={"error": e})
+            logger.error(
+                f"Failed to located a Page {page_num} REASON: {e}", extra={"error": e}
+            )
             return None
 
     def get_file_metadata(self) -> dict:
@@ -132,12 +136,6 @@ class NoloPDFHandler:
         """
         try:
             VoiceId = "Penelope" if tts_dict["gender"] == "female" else "Miguel"
-            # if tts_dict["gender"] == "female":
-            #     VoiceId = "Penelope"
-            # else:
-            #     VoiceId = "Miguel"
-
-            # filename = f"./{self.out_tts_path}/{self.hashed_fname}/{tts_dict.get('tts_file')}"
 
             response = tts_client.synthesize_speech(
                 VoiceId=VoiceId,
@@ -146,12 +144,9 @@ class NoloPDFHandler:
                 Engine="standard",
             )
 
-            # with open(filename, "wb") as tts:
-            #     tts.write(response["AudioStream"].read())
-            #
             audio_stream = io.BytesIO(response["AudioStream"].read())
 
-            logger.info(f"TTS Creation success!")
+            logger.info("TTS Creation success!")
             return audio_stream
         except Exception as e:
             logger.error(f"TTS Creation failed: REASON: {e}", extra={"error": e})
@@ -241,29 +236,18 @@ class NoloPDFHandler:
             return result
         except Exception as e:
             logger.error(f"Image extraction failed: REASON: {e}", extra={"error": e})
-            raise
-
-            # return False
+            return False
 
     # ASYNC Helper Functions
     def _create_image_from_file_sync(self, file_data: bytes):
         """
         Image Extraction Function
         """
-        # save_path = Path(f"./{self.out_img_path}/{self.hashed_fname}")
-        # images = convert_from_path(file_data, dpi=self.img_dpi)
         images = convert_from_bytes(file_data, dpi=self.img_dpi)
         for page_num, image in enumerate(images, start=1):
             # Create a Unique pageID
             label_num = f"{page_num:02}"  # Format page number with leading 0
-            # if page_num < 10:
-            #     # page_num = f"0{page_num}"
-            #     label_num = f"0{page_num}"
-            # else:
-            #     label_num = f"{page_num}"
-
             img_fname = f"{self.hashed_fname}_page_{label_num}.png"
-            # image.save(save_path / img_fname, "PNG")
 
             # Capture Image Data
             img_bytes = io.BytesIO()
@@ -281,24 +265,8 @@ class NoloPDFHandler:
                 s3_img_file_name_key, expires=os.getenv("URL_EXPIRATION_IN_SECS")
             )
 
-            # with open(
-            #     f"./{self.out_img_path}/{self.hashed_fname}/{img_fname}", "rb"
-            # ) as file_obj:
-            #     # encoded_img = base64.b64encode(file_obj.read())
-            #     # Upload to s3
-            #     self.s3_client.bucket.upload_fileobj(
-            #         file_obj,
-            #         self.s3_client.bucket_name,
-            #         f"img/{self.hashed_fname}/{img_fname}",
-            #     )
-
-            #     s3_img_file_name = f"img/{self.hashed_fname}/{img_fname}"
-
-            #     presigned_url = self.s3_client.generate_presigned_url(
-            #         s3_img_file_name, expires=os.getenv("URL_EXPIRATION_IN_SECS")
-            #     )
-
-            # # TODO: AI Image Description. Create Logic to avoid sending Text_only images or blank imnages
+            # # TODO: AI Image Description. Create Logic to avoid sending
+            # Text_only images or blank imnages
             # # Call Polly with a Different Gender (maybe female) from Text Reader
 
             # cover page
@@ -354,13 +322,7 @@ class NoloPDFHandler:
 
             # Create TEXT Files from Content
             label_num = f"{page_num:02}"  # Format page number with leading 0
-            # if page_num < 10:
-            #     # page_num = f"0{page_num}"
-            #     label_num = f"0{page_num}"
-            # else:
-            #     label_num = f"{page_num}"
 
-            # TODO: modify this code to save directly to  s3
             # In Memory Version for ECS Support
             #
             key = f"{self.hashed_fname}_page_{label_num}"
@@ -397,7 +359,7 @@ class NoloPDFHandler:
                 # Send Only Text to Lang Detection and TTS
                 lang, prob = self.detect_text_language(text)
                 tts_dict = {
-                    "tts_text": text,
+                    "tts_text": text.lower(),  # lower case for improve tts accuracy
                     "doc_id": self.hashed_fname,
                     "tts_file": f"{self.hashed_fname}_page_{label_num}.mp3",
                     "language": lang,
@@ -458,100 +420,6 @@ class NoloPDFHandler:
                 page_data["elements"]["txt_file_url"] = presigned_url
                 page_data["elements"]["tts_url"] = tts_presigned_url
                 page_data["elements"]["create_txt_tts"] = False
-
-            # # Local Storage Version
-            # with open(
-            #     f"./{self.out_txt_path}/{self.hashed_fname}/{self.hashed_fname}_page_{label_num}.txt",
-            #     "a",
-            # ) as file_obj:
-            #     file_obj.writelines(text)
-
-            #     # Upload to s3
-            #     self.s3_client.bucket.upload_file(
-            #         f"./{self.out_txt_path}/{self.hashed_fname}/{self.hashed_fname}_page_{label_num}.txt",
-            #         self.s3_client.bucket_name,
-            #         f"txt/{self.hashed_fname}/{self.hashed_fname}_page_{label_num}.txt",
-            #     )
-
-            #     s3_txt_file_name = (
-            #         f"txt/{self.hashed_fname}/{self.hashed_fname}_page_{label_num}.txt"
-            #     )
-            #     presigned_url = self.s3_client.generate_presigned_url(
-            #         s3_txt_file_name,
-            #         expires=os.getenv("URL_EXPIRATION_IN_SECS")
-            #     )
-
-            #     # Create TTS File - Polly
-            #     lang, prob = "",0
-            #     if text != '':
-            #         logger.info(f"Creating TTS File for Page {label_num}")
-            #         # Send Only Text to Lang Detection and TTS
-            #         lang, prob = self.detect_text_language(text)
-            #         tts_dict = {
-            #             "tts_text" : text,
-            #             "doc_id" : self.hashed_fname,
-            #             "tts_file" : f"{self.hashed_fname}_page_{label_num}.mp3",
-            #             "language" : lang,
-            #             "gender" : ""
-            #         }
-
-            #         tts_response = self.create_tts_from_text(tts_dict)
-            #         if tts_response:
-            #             #Upload to s3
-            #             self.s3_client.bucket.upload_file(
-            #                 f"./{self.out_tts_path}/{self.hashed_fname}/{self.hashed_fname}_page_{label_num}.mp3",
-            #                 self.s3_client.bucket_name,
-            #                 f"tts/{self.hashed_fname}/{self.hashed_fname}_page_{label_num}.mp3",
-            #             )
-
-            #             # Capture s3 Object TTS Filename
-            #             s3_tts_file_name = (
-            #                 f"tts/{self.hashed_fname}/{self.hashed_fname}_page_{label_num}.mp3"
-            #             )
-
-            #             # Create the presigned URL
-            #             tts_presigned_url = self.s3_client.generate_presigned_url(
-            #                 s3_tts_file_name, expires=os.getenv("URL_EXPIRATION_IN_SECS")
-            #             )
-            #     else:
-            #         tts_presigned_url = None
-
-            #     # Assign Page Metadata
-            #     # Look for Existing the Page_ID in the Page Index, if not create one
-            #     page_data = self.get_page_data_dict(page_num)
-            #     if page_data is None:
-            #         """
-            #         For Any New Page Collect MetaData
-            #         """
-            #         logger.info(f"Creating Page {page_num} text info")
-            #         file_page = {}
-            #         file_page["master_doc"] = self.hashed_fname
-            #         file_page["page_num"] = page_num
-            #         file_page["page_id"] = f"pg_{label_num}_{uuid4().hex}"
-            #         file_page["file_name"] = f"{self.hashed_fname}_page_{label_num}.txt"
-            #         self.create_page_index_list(page_num, file_page["page_id"])
-            #         file_page["elements"] = {
-            #             "text": text,
-            #             "lang": lang,
-            #             "lang_accuracy": prob,
-            #             "txt_file_url": presigned_url,
-            #             "tts_url" : tts_presigned_url,
-            #             "create_txt_tts" : False
-            #         }
-            #         self.file_metadata["pages"].append(file_page)
-
-            #     else:
-            #         """
-            #         For Existing Pages, just add the text element
-            #         """
-            #         logger.info(f"Updating Page {page_num} text info")
-            #         page_data["master_doc"] = self.hashed_fname
-            #         page_data["elements"]["text"] = text
-            #         page_data["elements"]["lang"] = lang
-            #         page_data["elements"]["lang_accuracy"] = prob
-            #         page_data["elements"]["txt_file_url"] = presigned_url
-            #         page_data["elements"]["tts_url"] = tts_presigned_url
-            #         page_data["elements"]["create_txt_tts"] = False
 
         logger.info(f"Text Extraction sucedded booklet id {self.hashed_fname}")
         return self.hashed_fname
