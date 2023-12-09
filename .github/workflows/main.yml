@@ -50,14 +50,14 @@ jobs:
           container-name: ${{ env.CONTAINER_NAME }}
           image: ${{ steps.build-api-image.outputs.image }}
 
-      - name: Build, tag and push Backend to Amazon ECR
+      - name: Build, tag and push Proxy to Amazon ECR
         id: build-pxy-image
         env:
           ECR_REGISTRY: "536422989755.dkr.ecr.us-east-1.amazonaws.com"
           ECR_REPOSITORY: "noloreader/proxy"
           IMAGE_TAG: latest
         run: |
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG app/.
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG proxy/.
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
 
