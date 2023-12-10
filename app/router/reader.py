@@ -54,30 +54,33 @@ def ping():
     return {"message": "pong", "module": MODULE_NAME}
 
 
-# TODO: Add URI for Return all the Documents id, Name, Cover Page Thumbnail
+# URI for Return all the Documents id, Name, Cover Page Thumbnail
 @router.get("/bookshelf", response_model=BookletList, dependencies=[RATE_LIMIT])
 def return_all_documents() -> dict:
     """
     return a JSON struct with all doc
     """
-    table = db.get_table()
-    response = table.scan(
-        ProjectionExpression="doc_id, doc_name, doc_description, number_of_pages,owner_id, created_at, modify_at, cover_img"
-    )
-    data = response["Items"]
-    # data = response["Count"]
+    try:
+        table = db.get_table()
+        response = table.scan(
+            ProjectionExpression="doc_id, doc_name, doc_title, doc_description, number_of_pages,owner_id, created_at, modify_at, cover_img, is_published, tts_ready"
+        )
+        data = response["Items"]
+        # data = response["Count"]
 
-    # TODO: Calculate Presigned URL for Cover
-    for item in data:
-        img_file_key = f"img/{item['doc_id']}/{item['doc_id']}_page_01.png"
-        cover_img = s3.generate_presigned_url(img_file_key)
-        item["cover_img"] = cover_img
+        # TODO: Calculate Presigned URL for Cover
+        for item in data:
+            img_file_key = f"img/{item['doc_id']}/{item['doc_id']}_page_01.png"
+            cover_img = s3.generate_presigned_url(img_file_key)
+            item["cover_img"] = cover_img
 
-    if not data:
+        if not data:
+            logger.warning("No Data in Table")
+            raise HTTPException(status_code=404, detail=" Not Data in Table")
+        return data
+    except Exception as e:
+        logger.error(f"No Data Found REASON: {e}", extra={"error": e})
         raise HTTPException(status_code=404, detail=" Not Data in Table")
-
-    # response = dummy_data.create_multiple_docs()
-    return data
 
 
 @router.get("/bookshelf/{item_id}", response_model=Booklet, dependencies=[RATE_LIMIT])
@@ -85,13 +88,11 @@ async def return_one_item(item_id: str):
     """
     GET One Item
     """
-    # response = dummy_data.create_single_doc()
-
     table = db.get_table()
     response = table.get_item(Key={"doc_id": item_id})
     item = response.get("Item")
 
-    # TODO: Recalculate the presigned URL for each page
+    # Recalculate the presigned URL for each page
     for page in item["pages"]:
         page_name = page["file_name"]
         hashed_name = page["master_doc"]

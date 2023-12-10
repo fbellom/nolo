@@ -58,11 +58,6 @@ def update_item_and_counter(table, item_key: Dict, attributes: Dict) -> Dict:
             update_expression += f" #{key} = :{key}, "
             expression_attrib_names[f"#{key}"] = key
             expression_attrib_values[f":{key}"] = value
-
-    # Add Counter start and increment attributes
-    # expression_attrib_values[':_start'] = 0
-    # expression_attrib_values[':_inc'] = 1
-
     # Finish update-expression
     # update_expression += " update_counter = if_not_exists(update_counter, :_start) + :_inc"
     update_expression = update_expression[:-2]
@@ -93,6 +88,7 @@ def ping(user: User = Depends(get_current_active_user)):
     summary="Upload Booklet to be processed",
     response_model=Booklet,
     dependencies=[PROTECTED, RATE_LIMIT],
+    status_code=status.HTTP_201_CREATED,
 )
 async def upload_file(
     file: UploadFile = File(...),
@@ -122,10 +118,6 @@ async def upload_file(
     # Read file into memory
     file_data = await file.read()
 
-    # file_location = f"{upload_path}/{file.filename}"
-    # with open(file_location, "wb") as file_object:
-    #     file_object.write(file.file.read())
-
     # Invoke PDF Handler
     pdf_handler = NoloPDFHandler(file_name=file.filename, description=description)
     # response = await pdf_handler.async_extract_text_from_file()
@@ -150,19 +142,10 @@ async def upload_file(
         }
     )
 
-    #
-
     # Send file_metadata to DynamoDB
     table = db.get_table()
     table.put_item(Item=file_metadata)
     logger.info(f"Booklet {file.filename} uploaded sucessfully!")
-
-    # Delete Local Files
-    # response = pdf_handler.delete_files_objects()
-    # if response == False:
-    #     logger.error(f"Failed to delete local files")
-    #     raise HTTPException(status_code=400, detail="Failed to delete local files")
-
     logger.info(f"Booklet {file.filename} completed!")
     return file_metadata
 
@@ -239,8 +222,6 @@ async def update_one_booklet(
         # Create Modified Metadata
         item["doc_title"] = booklet.doc_title
         item["doc_description"] = booklet.doc_description
-        # item['is_published'] = False
-        # item['tts_ready'] = False
         item["modify_at"] = int(time.time())
         item["owner_id"] = user.username
 

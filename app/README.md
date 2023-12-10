@@ -15,3 +15,5 @@ Improving Handler
 ## version: 1.0.2
 
 Presigned URL and DRY
+
+## version: 1.1.0
