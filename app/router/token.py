@@ -73,7 +73,7 @@ async def login_for_access_token(response: Response,
     refresh_token = iam.create_refresh_token(data={"sub": user.username})
 
     # Establecer refresh token como cookie
-    response.set_cookie(key="refresh_token", value=refresh_token, httponly=True, secure=True, samesite='Lax')
+    response.set_cookie(key="refresh_token", value=refresh_token, httponly=True, secure=True, samesite='None')
     
     return {
         "access_token": access_token,
@@ -115,7 +115,7 @@ async def get_refresh_token(response: Response, request: Request,
     refresh_token = iam.create_refresh_token(data={"sub": current_user.username})
 
     # Establecer refresh token como cookie
-    response.set_cookie(key="refresh_token", value=refresh_token, httponly=True, secure=True, samesite='Lax')
+    response.set_cookie(key="refresh_token", value=refresh_token, httponly=True, secure=True, samesite='None')
 
     # Enviar el Nuevo access token en el body
     return {
