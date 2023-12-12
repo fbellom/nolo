@@ -2,7 +2,6 @@ from fastapi import FastAPI
 from settings.nolo_config import NoloCFG
 from router import booklet, reader, token, sign
 import uvicorn
-from mangum import Mangum
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 import logging
@@ -24,7 +23,7 @@ app = FastAPI(
 )
 
 
-# Midelleware
+# Middleware
 # Allow these origins to access the API
 ORIGINS = [
     "http://localhost",
@@ -34,6 +33,7 @@ ORIGINS = [
     "https://www.nololector.org",
     "http://elk.latampod.com:3006",
     "http://10.60.25.20:3006",
+    "http://10.60.25.69:3000",
 ]
 
 # Allow these methods to be used
@@ -58,8 +58,6 @@ async def docs():
     return RedirectResponse(url="/docs")
 
 
-# For Serverles Lambda
-handler = Mangum(app)
 
 # Router
 app.include_router(token.router)

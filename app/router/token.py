@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi import APIRouter, HTTPException, status, Depends, Response, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from typing import Annotated
 from handlers.ral_handler import NoloRateLimit
@@ -59,7 +59,7 @@ def authenticate_user(username: str, password: str):
 @router.post(
     "", summary=MODULE_SUMMARY, response_model=Token, dependencies=[RATE_LIMIT]
 )
-async def login_for_access_token(
+async def login_for_access_token(response: Response,
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
 ):
     user = authenticate_user(form_data.username, form_data.password)
@@ -72,32 +72,55 @@ async def login_for_access_token(
     access_token = iam.create_access_token(data={"sub": user.username})
     refresh_token = iam.create_refresh_token(data={"sub": user.username})
 
+    # Establecer refresh token como cookie
+    response.set_cookie(key="refresh_token", value=refresh_token, httponly=True, secure=True, samesite='Lax')
+    
     return {
         "access_token": access_token,
         "token_type": "bearer",
-        "refresh_token": refresh_token,
     }
 
 
 @router.post(
     "/refresh", summary=MODULE_SUMMARY, response_model=Token, dependencies=[RATE_LIMIT]
 )
-async def get_refresh_token(
+async def get_refresh_token(response: Response, request: Request,
     current_user: Annotated[User, Depends(get_current_active_user)]
 ):
-    if not current_user:
-        raise HTTPException(
+    
+    # Custom Exceptions
+    no_current_user_exception = HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    
+    invalid_refresh_token_exception = HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid Refresh Token",
+        )
+    
+    if not current_user:
+        raise no_current_user_exception
+    
+    # Validate Refresh Token 
+    payload =  iam.validate_refresh_token(request.cookies.get("refresh_token"))
+    if payload is None:
+        raise invalid_refresh_token_exception
+
+
+
+    # Create New Access and Refresh Token if Refresh is still valid
     access_token = iam.create_access_token(data={"sub": current_user.username})
     refresh_token = iam.create_refresh_token(data={"sub": current_user.username})
 
+    # Establecer refresh token como cookie
+    response.set_cookie(key="refresh_token", value=refresh_token, httponly=True, secure=True, samesite='Lax')
+
+    # Enviar el Nuevo access token en el body
     return {
         "access_token": access_token,
         "token_type": "bearer",
-        "refresh_token": refresh_token,
     }
 
 
