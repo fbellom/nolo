@@ -58,7 +58,6 @@ async def docs():
     return RedirectResponse(url="/docs")
 
 
-
 # Router
 app.include_router(token.router)
 app.include_router(sign.router)

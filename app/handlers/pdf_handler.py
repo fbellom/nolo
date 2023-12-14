@@ -267,8 +267,6 @@ class NoloPDFHandler:
                 s3_img_file_name_key, expires=os.getenv("URL_EXPIRATION_IN_SECS")
             )
 
-            
-
             # cover page
             if page_num == 1:
                 self.file_metadata["cover_img"] = presigned_url
@@ -276,7 +274,7 @@ class NoloPDFHandler:
             # Access Page MetaData
             page_data = self.get_page_data_dict(page_num)
 
-            #AI Image Description. Create Logic to avoid sending
+            # AI Image Description. Create Logic to avoid sending
             # Text_only images or blank imnages
             # # Call Polly with a Different Gender (maybe female) from Text Reader
 
@@ -299,9 +297,7 @@ class NoloPDFHandler:
                 }
 
                 tts_audio_stream = self.create_tts_from_text(tts_dict)
-                s3_tts_file_name_key = (
-                    f"tts/{self.hashed_fname}/{self.hashed_fname}_img_desc_page_{label_num}.mp3"
-                )
+                s3_tts_file_name_key = f"tts/{self.hashed_fname}/{self.hashed_fname}_img_desc_page_{label_num}.mp3"
 
                 # Upload to s3
                 self.s3_client.bucket.upload_fileobj(
@@ -316,11 +312,9 @@ class NoloPDFHandler:
             else:
                 img_tts_presigned_url = None
 
-            logger.info("PDF Image Description Proccess competed!")    
-            
+            logger.info("PDF Image Description Proccess competed!")
 
-
-           # Prepare Data Dictionary to send it to DB
+            # Prepare Data Dictionary to send it to DB
             logger.info("Prepare Booklet Data to DB competed! ")
             if page_data is None:
                 """
@@ -338,7 +332,7 @@ class NoloPDFHandler:
                     "image": img_fname,
                     "img_url": presigned_url,
                     "img_text": img_ai_desc,
-                    "img_tts_url" : img_tts_presigned_url,
+                    "img_tts_url": img_tts_presigned_url,
                     "create_img_tts": True,
                 }
                 self.file_metadata["pages"].append(file_page)
@@ -356,7 +350,7 @@ class NoloPDFHandler:
                 page_data["elements"]["create_img_tts"] = True
 
         #
-        self.file_metadata["tts_ready"] = True        
+        self.file_metadata["tts_ready"] = True
         logger.info("Booklet Image Extraction succeded")
         return self.hashed_fname
 

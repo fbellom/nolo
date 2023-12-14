@@ -39,11 +39,11 @@ class NoloCFG:
         self.aws_secret_access_key_id = AWS_SECRET_ACCESS_KEY
         self.aws_default_region = AWS_DEFAULT_REGION
         self.openai_api_key = os.getenv("OPENAI_API_KEY")
-        self.openai_org_id=os.getenv("OPENAI_ORG_ID")
-        self.openai_max_char=os.getenv("OPENAI_PROMPT_MAX_CHAR")
-        self.openai_max_tkn=os.getenv("OPENAI_PROMPT_MAX_TKN")
-        self.openai_min_lines=os.getenv("OPENAI_PROMPT_MIN_LINES")
-        self.openai_model="gpt-4-vision-preview" or os.getenv("OPENAI_MODEL")
+        self.openai_org_id = os.getenv("OPENAI_ORG_ID")
+        self.openai_max_char = os.getenv("OPENAI_PROMPT_MAX_CHAR")
+        self.openai_max_tkn = os.getenv("OPENAI_PROMPT_MAX_TKN")
+        self.openai_min_lines = os.getenv("OPENAI_PROMPT_MIN_LINES")
+        self.openai_model = "gpt-4-vision-preview" or os.getenv("OPENAI_MODEL")
         self.logs_cfg = logging.basicConfig(
             level=logging.INFO, format="%(asctime)s %(levelname)s:%(message)s"
         )

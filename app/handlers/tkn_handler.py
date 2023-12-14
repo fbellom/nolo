@@ -58,12 +58,11 @@ class NoloToken:
         to_encode.update({"exp": expire})
         encoded_jwt = jwt.encode(to_encode, self.refresh_key, algorithm=self.algorithm)
         return encoded_jwt
-    
+
     def validate_refresh_token(self, token: str) -> dict | None:
         try:
-            payload = jwt.decode(token, self.refresh_key,algorithms=[self.algorithm])
+            payload = jwt.decode(token, self.refresh_key, algorithms=[self.algorithm])
             return payload
         except JWTError:
             logger.error("Refresh token validation failed")
             return None
-                
