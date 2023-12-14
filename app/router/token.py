@@ -93,7 +93,7 @@ async def login_for_access_token(
 async def get_refresh_token(
     response: Response,
     request: Request,
-    current_user: Annotated[User, Depends(get_current_active_user)],
+    #current_user: Annotated[User, Depends(get_current_active_user)],
 ):
     # Custom Exceptions
     no_current_user_exception = HTTPException(
@@ -107,8 +107,8 @@ async def get_refresh_token(
         detail="Invalid Refresh Token",
     )
 
-    if not current_user:
-        raise no_current_user_exception
+    # if not current_user:
+    #     raise no_current_user_exception
 
     # Validate Refresh Token
     payload = iam.validate_refresh_token(request.cookies.get("refresh_token"))
@@ -116,8 +116,8 @@ async def get_refresh_token(
         raise invalid_refresh_token_exception
 
     # Create New Access and Refresh Token if Refresh is still valid
-    access_token = iam.create_access_token(data={"sub": current_user.username})
-    refresh_token = iam.create_refresh_token(data={"sub": current_user.username})
+    access_token = iam.create_access_token(data={"sub": payload["sub"]})
+    refresh_token = iam.create_refresh_token(data={"sub": payload["sub"]})
 
     # Establecer refresh token como cookie
     response.set_cookie(

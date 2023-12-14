@@ -285,11 +285,12 @@ class NoloPDFHandler:
 
             # Create Synth Voice for img_tts_url and presigned
             if img_ai_desc is not None:
+                tts_text = img_ai_desc[:399] if len(img_ai_desc) > 399 else img_ai_desc
                 logger.info(f"Creating IMG TTS File for Page {label_num}")
                 # Send Only Text to Lang Detection and TTS
                 lang, prob = self.detect_text_language(img_ai_desc)
                 tts_dict = {
-                    "tts_text": img_ai_desc.lower(),  # lower case for improve tts accuracy
+                    "tts_text": tts_text.lower(),  # lower case for improve tts accuracy
                     "doc_id": self.hashed_fname,
                     "tts_file": f"{self.hashed_fname}_img_desc_page_{label_num}.mp3",
                     "language": lang,
