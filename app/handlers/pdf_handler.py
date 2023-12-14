@@ -332,7 +332,7 @@ class NoloPDFHandler:
                 file_page["elements"] = {
                     "image": img_fname,
                     "img_url": presigned_url,
-                    "img_text": img_ai_desc,
+                    "img_text": img_ai_desc[:399] if len(img_ai_desc) > 399 else img_ai_desc,
                     "img_tts_url": img_tts_presigned_url,
                     "create_img_tts": True,
                 }
@@ -346,7 +346,7 @@ class NoloPDFHandler:
                 page_data["file_name"] = img_fname
                 page_data["elements"]["image"] = img_fname
                 page_data["elements"]["img_url"] = presigned_url
-                page_data["elements"]["img_text"] = img_ai_desc
+                page_data["elements"]["img_text"] = img_ai_desc[:399] if len(img_ai_desc) > 399 else img_ai_desc
                 page_data["elements"]["img_tts_url"] = img_tts_presigned_url
                 page_data["elements"]["create_img_tts"] = True
 

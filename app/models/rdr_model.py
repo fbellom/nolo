@@ -33,7 +33,7 @@ class Booklet(BaseModel):
     doc_id: Optional[str] = None
     doc_name: Optional[str] = None
     doc_title: Optional[str] = None
-    doc_description: Optional[constr(max_length=300)] = None
+    doc_description: Optional[constr(max_length=400)] = None
     number_of_pages: Optional[int] = None
     created_at: int = Field(
         default_factory=lambda: int(datetime.datetime.now().timestamp())
@@ -59,7 +59,7 @@ class BookletList(RootModel[List[Booklet]]):
 # Partial Edits Models
 class PageElementEdit(BaseModel):
     text: Optional[str] = None
-    img_text: Optional[constr(max_length=300)] = None
+    img_text: Optional[constr(max_length=400)] = None
 
 
 class PageEdit(BaseModel):
