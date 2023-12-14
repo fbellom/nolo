@@ -11,7 +11,7 @@ class PageElement(BaseModel):
     text: Optional[str] = None
     txt_file_url: Optional[HttpUrl] = None
     tts_url: Optional[HttpUrl] = None
-    img_text: Optional[constr(max_length=300)] = None
+    img_text: Optional[constr(max_length=400)] = None
     img_tts_url: Optional[HttpUrl] = None
     create_img_tts: bool = Field(
         default=True, description="Indicates if the page is ready for text-to-speech"

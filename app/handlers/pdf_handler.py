@@ -11,6 +11,7 @@ from langdetect import detect_langs
 from langdetect.lang_detect_exception import LangDetectException
 from handlers.s3_handler import NoloBlobAPI
 from handlers.tts_handler import NoloTTS
+from handlers.ai_handler import NoloAIHelper
 from utils.text_cleaner import NoloCleaner
 import logging
 import shutil
@@ -22,6 +23,7 @@ logger = logging.getLogger(__name__)
 cleaner = NoloCleaner()
 polly = NoloTTS()
 tts_client = polly.client
+noloai = NoloAIHelper()
 
 
 class NoloPDFHandler:
@@ -265,9 +267,7 @@ class NoloPDFHandler:
                 s3_img_file_name_key, expires=os.getenv("URL_EXPIRATION_IN_SECS")
             )
 
-            # # TODO: AI Image Description. Create Logic to avoid sending
-            # Text_only images or blank imnages
-            # # Call Polly with a Different Gender (maybe female) from Text Reader
+            
 
             # cover page
             if page_num == 1:
@@ -275,6 +275,53 @@ class NoloPDFHandler:
 
             # Access Page MetaData
             page_data = self.get_page_data_dict(page_num)
+
+            #AI Image Description. Create Logic to avoid sending
+            # Text_only images or blank imnages
+            # # Call Polly with a Different Gender (maybe female) from Text Reader
+
+            img_ai_desc_lang = "es" if page_data["elements"]["lang"] != "en" else "en"
+            logger.info("Sending Image to AI for Description")
+            img_ai_desc = noloai.nolo_ai_description(presigned_url, img_ai_desc_lang)
+            logger.info("Image Description from AI completed")
+
+            # Create Synth Voice for img_tts_url and presigned
+            if img_ai_desc is not None:
+                logger.info(f"Creating IMG TTS File for Page {label_num}")
+                # Send Only Text to Lang Detection and TTS
+                lang, prob = self.detect_text_language(img_ai_desc)
+                tts_dict = {
+                    "tts_text": img_ai_desc.lower(),  # lower case for improve tts accuracy
+                    "doc_id": self.hashed_fname,
+                    "tts_file": f"{self.hashed_fname}_img_desc_page_{label_num}.mp3",
+                    "language": lang,
+                    "gender": "female",
+                }
+
+                tts_audio_stream = self.create_tts_from_text(tts_dict)
+                s3_tts_file_name_key = (
+                    f"tts/{self.hashed_fname}/{self.hashed_fname}_img_desc_page_{label_num}.mp3"
+                )
+
+                # Upload to s3
+                self.s3_client.bucket.upload_fileobj(
+                    tts_audio_stream, self.s3_client.bucket_name, s3_tts_file_name_key
+                )
+
+                # Calculate Presigned URL
+                img_tts_presigned_url = self.s3_client.generate_presigned_url(
+                    s3_tts_file_name_key, expires=os.getenv("URL_EXPIRATION_IN_SECS")
+                )
+
+            else:
+                img_tts_presigned_url = None
+
+            logger.info("PDF Image Description Proccess competed!")    
+            
+
+
+           # Prepare Data Dictionary to send it to DB
+            logger.info("Prepare Booklet Data to DB competed! ")
             if page_data is None:
                 """
                 New Page
@@ -290,8 +337,9 @@ class NoloPDFHandler:
                 file_page["elements"] = {
                     "image": img_fname,
                     "img_url": presigned_url,
-                    "img_text": "",
-                    "create_img_tts": False,
+                    "img_text": img_ai_desc,
+                    "img_tts_url" : img_tts_presigned_url,
+                    "create_img_tts": True,
                 }
                 self.file_metadata["pages"].append(file_page)
             else:
@@ -303,10 +351,12 @@ class NoloPDFHandler:
                 page_data["file_name"] = img_fname
                 page_data["elements"]["image"] = img_fname
                 page_data["elements"]["img_url"] = presigned_url
-                page_data["elements"]["img_text"] = ""
-                page_data["elements"]["create_img_tts"] = False
+                page_data["elements"]["img_text"] = img_ai_desc
+                page_data["elements"]["img_tts_url"] = img_tts_presigned_url
+                page_data["elements"]["create_img_tts"] = True
 
-        # TODO: Return File Path
+        #
+        self.file_metadata["tts_ready"] = True        
         logger.info("Booklet Image Extraction succeded")
         return self.hashed_fname
 

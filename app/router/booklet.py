@@ -135,7 +135,6 @@ async def upload_file(
     file_metadata.update(
         {
             "owner_id": user.username,
-            "tts_ready": False,
             "is_published": True,
             "doc_title": title,
             "doc_description": description,

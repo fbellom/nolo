@@ -55,7 +55,7 @@ class NoloTTS:
         response = client.synthesize_speech(
             VoiceId=VoiceId,
             OutputFormat="mp3",
-            Text=new_tts_file.get("text_t_transform"),
+            Text=new_tts_file.get("tts_text"),
             Engine="standard",
         )
 
