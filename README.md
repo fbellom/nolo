@@ -5,6 +5,8 @@ Web Application for PDF Uploading, Text and Image Extraction, and TTS conversion
 Backend:
 
 - Python FastAPI
+- AWS Boto3
+- OpenAI
 
 Front-End
 
