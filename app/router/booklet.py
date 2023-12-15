@@ -1,6 +1,6 @@
 from typing import Dict
 import time
-from fastapi import APIRouter, Depends, Form, HTTPException, status, UploadFile, File
+from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, status, UploadFile, File
 import os
 from handlers.pdf_handler import NoloPDFHandler
 from handlers.db_handler import NoloDBHandler
@@ -8,8 +8,9 @@ from handlers.s3_handler import NoloBlobAPI
 from handlers.dep_handler import get_current_active_user
 from handlers.ral_handler import NoloRateLimit
 from models.iam_model import User
-from models.rdr_model import Booklet, BookletEdit
+from models.rdr_model import Booklet, BookletEdit, BookletTask, TaskStatus
 import logging
+import uuid
 
 # Create Logger
 logger = logging.getLogger(__name__)
@@ -42,6 +43,8 @@ rate_limit = NoloRateLimit(
 PROTECTED = Depends(get_current_active_user)
 RATE_LIMIT = Depends(rate_limit)
 
+# TASK Tracker
+task_status: Dict[str, str] = {}
 
 # Helper Function
 
@@ -81,22 +84,131 @@ def index(user: User = Depends(get_current_active_user)):
 def ping(user: User = Depends(get_current_active_user)):
     return {"message": "pong", "module": MODULE_NAME}
 
+@router.get("/status/{task_id}", response_model=TaskStatus)
+async def get_status(task_id: str):
+    task_not_found_exception = HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail="Task Not found",
+    )
+
+    if task_id in task_status:
+        return {"task_id": task_id, "status": task_status[task_id]}
+    raise task_not_found_exception
+
+
 
 # CREATE
+# @router.post(
+#     "/upload",
+#     summary="Upload Booklet to be processed",
+#     response_model=Booklet,
+#     dependencies=[PROTECTED, RATE_LIMIT],
+#     status_code=status.HTTP_201_CREATED,
+# )
+# async def upload_file(
+#     file: UploadFile = File(...),
+#     title: str = Form(None),
+#     description: str = Form(None),
+#     user: User = Depends(get_current_active_user),
+# ):
+#     # Exception
+#     file_type_exception = HTTPException(
+#         status_code=status.HTTP_400_BAD_REQUEST,
+#         detail="User is inactive",
+#     )
+#     user_inactive_exception = HTTPException(
+#         status_code=status.HTTP_401_UNAUTHORIZED,
+#         detail="User is inactive",
+#     )
+
+#     # Validate PDF File
+#     if file.content_type != "application/pdf":
+#         raise file_type_exception
+
+#     if user.disabled:
+#         raise user_inactive_exception
+
+#     # Save File Locally
+#     logger.info(f"Booklet {file.filename} started!")
+#     # Read file into memory
+#     file_data = await file.read()
+
+#     # Invoke PDF Handler
+#     pdf_handler = NoloPDFHandler(file_name=file.filename, description=description)
+#     # response = await pdf_handler.async_extract_text_from_file()
+#     response = await pdf_handler.async_extract_text_from_file(file_data)
+#     if not response:
+#         logger.error(f"Failed to extract Text from Booklet {title}")
+#         raise HTTPException(status_code=400, detail="Failed to extract Text from File")
+
+#     response = await pdf_handler.async_create_image_from_file(file_data)
+#     if not response:
+#         logger.error(f"Failed to extract Images from PDF {title}")
+#         raise HTTPException(status_code=400, detail="Failed to extract Images from PDF")
+
+#     file_metadata = pdf_handler.get_file_metadata()
+#     file_metadata.update(
+#         {
+#             "owner_id": user.username,
+#             "is_published": True,
+#             "doc_title": title,
+#             "doc_description": description,
+#         }
+#     )
+
+#     # Send file_metadata to DynamoDB
+#     table = db.get_table()
+#     table.put_item(Item=file_metadata)
+#     logger.info(f"Booklet {file.filename} uploaded sucessfully!")
+#     logger.info(f"Booklet {file.filename} completed!")
+#     return file_metadata
+
+# CREATE
+# Background task function
+# Mover el proceso del Booklet a un Background task resulto ser mas sencillo de lo que pensamos. FastAPI tiene un soporte nativo para ese tipo de caso de uso, sin necesidad de crear un manejo de queues ni nada muy sofisticado. Lo implemente en un branch y funciona bien. Por ahora no le voy a hacer merge con main, pero eso en definitiva resuelve de una manera simple elegante la espera del proceso
+async def process_pdf_file(task_id: str, file_data: bytes, file_metadata: dict, user: User):
+
+    task_status[task_id] = "processing"
+    logger.info(f"Task {task_id} started")
+    try:
+        pdf_handler = NoloPDFHandler(file_name=file_metadata['filename'], description=file_metadata['description'])
+        await pdf_handler.async_extract_text_from_file(file_data)
+        await pdf_handler.async_create_image_from_file(file_data)
+
+        file_metadata.update(pdf_handler.get_file_metadata())
+        file_metadata.update({
+            "owner_id": user.username,
+            "is_published": True,
+            "doc_title": file_metadata['title'],
+            "doc_description": file_metadata['description'],
+        })
+
+        # Send file_metadata to DynamoDB
+        table = db.get_table()
+        table.put_item(Item=file_metadata)
+        logger.info(f"Booklet {file_metadata['filename']} processed and saved successfully!")
+        task_status[task_id] = "completed"
+    except Exception as e:
+        logger.error(f"Error processing file {file_metadata['filename']}: {str(e)}")
+        task_status[task_id] = "failed"  
+
+
+
 @router.post(
     "/upload",
     summary="Upload Booklet to be processed",
-    response_model=Booklet,
+    response_model=BookletTask,
     dependencies=[PROTECTED, RATE_LIMIT],
-    status_code=status.HTTP_201_CREATED,
+    status_code=status.HTTP_202_ACCEPTED,
 )
 async def upload_file(
+    background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     title: str = Form(None),
     description: str = Form(None),
     user: User = Depends(get_current_active_user),
 ):
-    # Exception
+    
     file_type_exception = HTTPException(
         status_code=status.HTTP_400_BAD_REQUEST,
         detail="User is inactive",
@@ -106,47 +218,30 @@ async def upload_file(
         detail="User is inactive",
     )
 
+    task_id = str(uuid.uuid4())
+
     # Validate PDF File
     if file.content_type != "application/pdf":
         raise file_type_exception
 
     if user.disabled:
         raise user_inactive_exception
-
-    # Save File Locally
-    logger.info(f"Booklet {file.filename} started!")
+    
     # Read file into memory
     file_data = await file.read()
 
-    # Invoke PDF Handler
-    pdf_handler = NoloPDFHandler(file_name=file.filename, description=description)
-    # response = await pdf_handler.async_extract_text_from_file()
-    response = await pdf_handler.async_extract_text_from_file(file_data)
-    if not response:
-        logger.error(f"Failed to extract Text from Booklet {title}")
-        raise HTTPException(status_code=400, detail="Failed to extract Text from File")
+    # Prepare metadata for background processing
+    file_metadata = {
+        "filename": file.filename,
+        "description": description,
+        "title": title
+    }
 
-    response = await pdf_handler.async_create_image_from_file(file_data)
-    if not response:
-        logger.error(f"Failed to extract Images from PDF {title}")
-        raise HTTPException(status_code=400, detail="Failed to extract Images from PDF")
+    # Add background task
+    background_tasks.add_task(process_pdf_file, task_id, file_data, file_metadata, user)
 
-    file_metadata = pdf_handler.get_file_metadata()
-    file_metadata.update(
-        {
-            "owner_id": user.username,
-            "is_published": True,
-            "doc_title": title,
-            "doc_description": description,
-        }
-    )
-
-    # Send file_metadata to DynamoDB
-    table = db.get_table()
-    table.put_item(Item=file_metadata)
-    logger.info(f"Booklet {file.filename} uploaded sucessfully!")
-    logger.info(f"Booklet {file.filename} completed!")
-    return file_metadata
+    logger.info(f"Booklet {file.filename} upload initiated and processing in background.")
+    return {"message": f"File {file.filename} received, processing started in background", "task_id": task_id}
 
 
 # UPDATE

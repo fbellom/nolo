@@ -71,3 +71,13 @@ class BookletEdit(BaseModel):
     doc_title: Optional[str] = None
     doc_description: Optional[str] = None
     pages: list[PageEdit] | None = None
+
+
+class BookletTask(BaseModel):
+    message: Optional[str] = None
+    task_id: Optional[str] = None
+
+class TaskStatus(BaseModel):
+    task_id: Optional[str] = None
+    status: Optional[str] = None
+

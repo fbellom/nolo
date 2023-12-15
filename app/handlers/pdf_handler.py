@@ -95,8 +95,8 @@ class NoloPDFHandler:
             return page_data_dict
         except IndexError as e:
             logger.info(
-                f"Error Creating a new Page {page_num} REASON: {e} ",
-                extra={"error": "New Page"},
+                f"Creating a new Page {page_num} REASON: New Booklet ",
+                extra={"error": "New Booklet"},
             )
             return None
         except Exception as e:
