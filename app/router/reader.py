@@ -98,13 +98,17 @@ async def return_one_item(item_id: str):
         hashed_name = page["master_doc"]
         tts_file_key = f"tts/{hashed_name}/{page_name[:-4]}.mp3"
         img_file_key = f"img/{hashed_name}/{page_name}"
+        img_tts_file = page_name[:8] + "_img_desc" + page_name[8:-4] + ".mp3"
+        img_tts_file_key = f"tts/{hashed_name}/{img_tts_file}"
         txt_file_key = f"txt/{hashed_name}/{page_name[:-4]}.txt"
         tts_url = s3.generate_presigned_url(tts_file_key)
         img_url = s3.generate_presigned_url(img_file_key)
         txt_url = s3.generate_presigned_url(txt_file_key)
+        img_tts_url = s3.generate_presigned_url(img_tts_file_key)
         page["elements"]["img_url"] = img_url
         page["elements"]["tts_url"] = tts_url
         page["elements"]["txt_file_url"] = txt_url
+        page["elements"]["img_tts_url"] = img_tts_url
 
     if not item:
         raise HTTPException(status_code=404, detail=f" Not item {item_id} in Table")
